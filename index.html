@@ -85,6 +85,8 @@
   .btn.secondary:hover { background: var(--panel-2); }
   .btn.danger { background: var(--danger); color: #fff; }
   .btn.danger:hover { background: #8f2626; }
+  .btn.ok { background: var(--ok); color: #fff; }
+  .btn.ok:hover { background: #3a9c63; }
   .btn-block { width: 100%; }
   .hint {
     margin-top: 16px; padding: 10px; background: #0d1620;
@@ -94,7 +96,6 @@
   .hint b { color: var(--accent-2); }
   .error { color: #ff6b6b; font-size: 12px; margin-top: 8px; min-height: 16px; }
 
-  /* загрузка файла */
   .file-drop {
     border: 1px dashed var(--border); border-radius: 4px;
     padding: 14px; text-align: center; font-size: 12px;
@@ -107,7 +108,6 @@
   .file-drop input { display: none; }
   .file-drop .icon { font-size: 22px; display: block; margin-bottom: 6px; }
 
-  /* экран ожидания верификации */
   .pending-box {
     max-width: 520px; margin: 60px auto; text-align: center;
     padding: 40px 34px;
@@ -297,10 +297,11 @@
 
   .modal-back {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,.65);
+    background: rgba(0,0,0,.75);
     display: none;
     align-items: center; justify-content: center;
     z-index: 1000; padding: 20px;
+    overflow-y: auto;
   }
   .modal-back.active { display: flex; }
   .modal {
@@ -310,11 +311,28 @@
     max-width: 460px; width: 100%;
     box-shadow: 0 20px 60px rgba(0,0,0,.6);
   }
+  .modal.verify { max-width: 900px; }
   .modal h3 { margin: 0 0 12px; color: #ff9a9a; font-size: 15px; letter-spacing: .3px; }
+  .modal.verify h3 { color: var(--accent-2); }
   .modal p { margin: 0 0 8px; font-size: 13px; color: var(--text); }
   .modal .meta { color: var(--muted); font-size: 12px; margin-bottom: 18px; }
   .modal .meta b { color: var(--accent-2); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+  .verify-info {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 14px; font-size: 13px;
+  }
+  .verify-info .kv { background: #0d1620; padding: 8px 12px; border-radius: 3px; border: 1px solid var(--border); }
+  .verify-info .kv .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .verify-info .kv .v { color: var(--text); margin-top: 2px; word-break: break-all; }
+
+  .verify-shot {
+    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+    background: #0d1620; text-align: center;
+    max-height: 60vh; overflow-y: auto;
+  }
+  .verify-shot img { max-width: 100%; display: block; }
 
   code.login-code {
     background: #0d1620; padding: 2px 6px; border-radius: 3px;
@@ -370,12 +388,12 @@
   <div class="text">Подключение к базе данных ОРУ…</div>
 </div>
 
-<!-- ========================= ЭКРАН ОЖИДАНИЯ ВЕРИФИКАЦИИ ========================= -->
+<!-- Экран ожидания верификации -->
 <div class="login-wrap" id="pendingScreen" style="display:none">
   <div class="pending-box">
     <div class="pend-icon">⏳</div>
-    <h2>Ожидайте ответа</h2>
-    <p>
+    <h2 id="pendingTitle">Ожидайте ответа</h2>
+    <p id="pendingText">
       Мы направили ваши данные в отдел ОРУ.<br>
       Пожалуйста, ожидайте решения администрации. Ничего не меняйте и не редактируйте.
     </p>
@@ -383,7 +401,7 @@
   </div>
 </div>
 
-<!-- ========================= ЭКРАН ЛОГИНА / РЕГИСТРАЦИИ ========================= -->
+<!-- Экран входа / регистрации -->
 <div class="login-wrap" id="loginScreen" style="display:none">
   <div class="login-card">
     <h1>ОРУ УФСБ России по ДНР</h1>
@@ -471,7 +489,7 @@
   </div>
 </div>
 
-<!-- ========================= ПРИЛОЖЕНИЕ ========================= -->
+<!-- Приложение -->
 <div class="app" id="app">
   <header class="topbar">
     <div class="brand">
@@ -510,6 +528,7 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Модалка удаления документа -->
 <div class="modal-back" id="deleteModal">
   <div class="modal">
     <h3>Удалить документ?</h3>
@@ -522,17 +541,25 @@
   </div>
 </div>
 
+<!-- Модалка верификации -->
+<div class="modal-back" id="verifyModal">
+  <div class="modal verify">
+    <h3>Верификация пользователя</h3>
+    <div class="verify-info" id="verifyInfo"></div>
+    <div class="verify-shot" id="verifyShot"></div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeVerifyModal()">Закрыть</button>
+      <button class="btn danger" onclick="rejectVerify()">❌ Отклонить</button>
+      <button class="btn ok" onclick="approveVerify()">✅ Одобрить</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    НАСТРОЙКИ
    ============================================================ */
 const FIREBASE_DB_URL = 'https://mst-oru-fsb-default-rtdb.europe-west1.firebasedatabase.app';
-
-/* Вставьте сюда Access Key с сайта web3forms.com */
-const WEB3FORMS_KEY = '6fa0e822-27d4-47da-bef0-e04c7ae2e87e';
-
-/* Email для получения заявок на верификацию */
-const ADMIN_EMAIL = 'horrihotch@gmail.com';
 
 /* ============================================================
    ХЕШИРОВАНИЕ (SHA-256)
@@ -765,7 +792,7 @@ function todayStr() {
   return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`;
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-/* ============================================================
+  /* ============================================================
    Права доступа
    ============================================================ */
 function canAccessUsersSection() { return currentUser.role === 'admin' || currentUser.role === 'chief'; }
@@ -786,6 +813,13 @@ function canChangeRole(t) {
   if (t.role === 'admin') return false;
   return true;
 }
+/* Одобрять и отклонять заявки может только АДМИНИСТРАТОР */
+function canVerifyUser(t) {
+  if (!currentUser || !t) return false;
+  if (currentUser.role !== 'admin') return false;
+  if (t.isSystem) return false;
+  return t.status === 'pending';
+}
 
 /* ============================================================
    Аутентификация
@@ -793,6 +827,7 @@ function canChangeRole(t) {
 let currentUser = DB.get('oru_session', null);
 let profileEditMode = false;
 let profilePwdMode  = false;
+let verifyTargetLogin = null;
 
 document.querySelectorAll('.auth-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -804,75 +839,21 @@ document.querySelectorAll('.auth-tab').forEach(tab => {
   });
 });
 
-/* ============================================================
-   Показ экрана "Ожидайте ответа"
-   ============================================================ */
+/* Показ экрана ожидания / отклонения */
 function showPendingScreen(message) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').classList.remove('active');
   const ps = document.getElementById('pendingScreen');
+  const title = document.getElementById('pendingTitle');
+  const text  = document.getElementById('pendingText');
   if (message) {
-    const h = ps.querySelector('h2');
-    const p = ps.querySelector('p');
-    if (h) h.textContent = message.title || 'Ожидайте ответа';
-    if (p) p.innerHTML = message.text || 'Мы направили ваши данные в отдел ОРУ.<br>Пожалуйста, ожидайте решения администрации. Ничего не меняйте и не редактируйте.';
+    title.textContent = message.title || 'Ожидайте ответа';
+    text.innerHTML = message.text || 'Мы направили ваши данные в отдел ОРУ.<br>Пожалуйста, ожидайте решения администрации. Ничего не меняйте и не редактируйте.';
+  } else {
+    title.textContent = 'Ожидайте ответа';
+    text.innerHTML = 'Мы направили ваши данные в отдел ОРУ.<br>Пожалуйста, ожидайте решения администрации. Ничего не меняйте и не редактируйте.';
   }
   ps.style.display = 'flex';
-}
-
-/* ============================================================
-   Отправка заявки на почту через Web3Forms
-   ============================================================ */
-async function sendVerificationEmail(user, screenshotDataUrl) {
-  const baseUrl = location.origin + location.pathname;
-  const approveUrl = `${baseUrl}?verify=approve&login=${encodeURIComponent(user.login)}`;
-  const rejectUrl  = `${baseUrl}?verify=reject&login=${encodeURIComponent(user.login)}`;
-
-  const htmlBody = `
-    <h2>Заявка на верификацию — ОРУ УФСБ России по ДНР</h2>
-    <p><b>Новый пользователь ожидает проверки:</b></p>
-    <table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px">
-      <tr><td><b>Логин</b></td><td>${user.login}</td></tr>
-      <tr><td><b>ФИО</b></td><td>${user.name}</td></tr>
-      <tr><td><b>Звание</b></td><td>${user.rank}</td></tr>
-      <tr><td><b>Должность</b></td><td>${user.position}</td></tr>
-      <tr><td><b>Подразделение</b></td><td>${user.subdivision}</td></tr>
-      <tr><td><b>SteamID</b></td><td>${user.steamid}</td></tr>
-      <tr><td><b>Дата регистрации</b></td><td>${new Date(user.createdAt).toLocaleString('ru-RU')}</td></tr>
-    </table>
-    <hr>
-    <p><b>Действия:</b></p>
-    <p>
-      <a href="${approveUrl}" style="display:inline-block;padding:10px 22px;background:#2e7d4f;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold">✅ Одобрить</a>
-      &nbsp;&nbsp;
-      <a href="${rejectUrl}" style="display:inline-block;padding:10px 22px;background:#b03030;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold">❌ Отклонить</a>
-    </p>
-    <p style="font-size:12px;color:#666">Если кнопки не работают, скопируйте ссылки:<br>
-      Одобрить: ${approveUrl}<br>
-      Отклонить: ${rejectUrl}
-    </p>
-  `;
-
-  const payload = {
-    access_key: WEB3FORMS_KEY,
-    subject: `[ОРУ] Заявка на верификацию — ${user.name} (${user.login})`,
-    from_name: 'ОРУ УФСБ России по ДНР',
-    to: ADMIN_EMAIL,
-    botcheck: false,
-    message: `Новая заявка на верификацию. Смотрите таблицу выше.`,
-    html: htmlBody,
-    screenshot: screenshotDataUrl
-  };
-
-  const r = await fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  const result = await r.json();
-  if (!result.success) throw new Error(result.message || 'Ошибка Web3Forms');
-  return true;
 }
 
 /* ============================================================
@@ -908,13 +889,13 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
   const passwordHash = await sha256(password);
 
-  // сжимаем изображение до 900px по ширине
+  // сжатие картинки
   const screenshotDataUrl = await new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
-        const maxW = 900;
+        const maxW = 1200;
         const scale = Math.min(1, maxW / img.width);
         const w = Math.round(img.width * scale);
         const h = Math.round(img.height * scale);
@@ -922,7 +903,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
       };
       img.src = ev.target.result;
     };
@@ -966,18 +947,12 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     return;
   }
 
-  try {
-    await sendVerificationEmail(user, screenshotDataUrl);
-  } catch (ex) {
-    console.error('Ошибка отправки письма:', ex);
-    toast('Заявка сохранена, но письмо не отправлено. Проверьте WEB3FORMS_KEY.', true);
-  }
-
   users.push(user);
   form.reset();
   resetSteamFileUI();
   currentUser = user;
   DB.set('oru_session', user);
+  toast('Заявка отправлена на проверку');
   showPendingScreen();
 });
 
@@ -1018,7 +993,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 });
 
 /* ============================================================
-   Выход из аккаунта
+   Выход
    ============================================================ */
 function logout() {
   currentUser = null;
@@ -1053,11 +1028,12 @@ function startApp() {
 }
 
 /* ============================================================
-   UI для загрузки скриншота
+   UI загрузки скриншота
    ============================================================ */
 function resetSteamFileUI() {
   const drop = document.getElementById('steamFileDrop');
   const text = document.getElementById('steamFileText');
+  if (!drop) return;
   drop.classList.remove('has-file');
   text.textContent = 'Нажмите, чтобы загрузить скриншот';
 }
@@ -1068,56 +1044,108 @@ document.addEventListener('DOMContentLoaded', () => {
   if (drop && input) {
     input.addEventListener('change', () => {
       const file = input.files[0];
-      if (file) {
-        drop.classList.add('has-file');
-        text.textContent = '✓ ' + file.name;
-      } else {
-        resetSteamFileUI();
-      }
+      if (file) { drop.classList.add('has-file'); text.textContent = '✓ ' + file.name; }
+      else resetSteamFileUI();
     });
     drop.addEventListener('click', () => input.click());
   }
 });
 
 /* ============================================================
-   Обработка ссылок из письма (?verify=approve&login=XXX)
+   МОДАЛКА ВЕРИФИКАЦИИ
    ============================================================ */
-async function processVerifyUrl() {
-  const params = new URLSearchParams(location.search);
-  const action = params.get('verify');
-  const login  = params.get('login');
-  if (!action || !login) return false;
+function openVerifyModal(login) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    toast('Только администратор может проверять заявки', true);
+    return;
+  }
+  const u = __store.users.find(x => x.login === login);
+  if (!u) return;
+  if (u.status !== 'pending') { toast('Заявка уже обработана', true); return; }
 
-  const target = __store.users.find(u => u.login === login);
-  if (!target) {
-    alert('Пользователь ' + login + ' не найден в базе.');
-    return true;
+  verifyTargetLogin = login;
+
+  document.getElementById('verifyInfo').innerHTML = `
+    <div class="kv"><div class="k">Логин</div><div class="v">${esc(u.login)}</div></div>
+    <div class="kv"><div class="k">ФИО</div><div class="v">${esc(u.name)}</div></div>
+    <div class="kv"><div class="k">Звание</div><div class="v">${esc(u.rank || '—')}</div></div>
+    <div class="kv"><div class="k">Должность</div><div class="v">${esc(u.position || '—')}</div></div>
+    <div class="kv"><div class="k">Подразделение</div><div class="v">${esc(u.subdivision || '—')}</div></div>
+    <div class="kv"><div class="k">SteamID</div><div class="v">${esc(u.steamid || '—')}</div></div>
+    <div class="kv"><div class="k">Дата регистрации</div><div class="v">${esc(fmtDate(u.createdAt))}</div></div>
+    <div class="kv"><div class="k">Статус</div><div class="v">Ожидает проверки</div></div>
+  `;
+
+  const shot = document.getElementById('verifyShot');
+  if (u.screenshot) {
+    shot.innerHTML = `<img src="${u.screenshot}" alt="Скриншот таба">`;
+  } else {
+    shot.innerHTML = `<div style="padding:30px;color:var(--muted)">Скриншот отсутствует</div>`;
   }
 
-  if (action === 'approve') {
-    target.status = 'approved';
-    try {
-      await fbPatch(`users/${login}`, { status: 'approved' });
-      alert('✅ Пользователь ' + target.name + ' (' + login + ') одобрен.');
-    } catch (e) {
-      console.error(e);
-      alert('Ошибка обновления статуса: ' + e.message);
-    }
-  } else if (action === 'reject') {
-    target.status = 'rejected';
-    try {
-      await fbPatch(`users/${login}`, { status: 'rejected' });
-      alert('❌ Пользователь ' + target.name + ' (' + login + ') отклонён.');
-    } catch (e) {
-      console.error(e);
-      alert('Ошибка обновления статуса: ' + e.message);
-    }
-  }
-
-  // чистим URL, чтобы не сработало повторно
-  history.replaceState({}, '', location.pathname);
-  return true;
+  document.getElementById('verifyModal').classList.add('active');
 }
+
+function closeVerifyModal() {
+  verifyTargetLogin = null;
+  document.getElementById('verifyModal').classList.remove('active');
+}
+
+async function approveVerify() {
+  if (!verifyTargetLogin) return;
+  if (!currentUser || currentUser.role !== 'admin') {
+    toast('Только администратор может одобрять', true); return;
+  }
+  const u = __store.users.find(x => x.login === verifyTargetLogin);
+  if (!u) return;
+
+  if (!confirm(`Одобрить верификацию пользователя «${u.name}» (${u.login})?`)) return;
+
+  try {
+    await fbPatch(`users/${u.login}`, { status: 'approved' });
+  } catch (e) {
+    console.error(e);
+    toast('Ошибка сохранения', true);
+    return;
+  }
+  u.status = 'approved';
+  toast('Пользователь одобрен');
+  closeVerifyModal();
+  nav('users');
+}
+
+async function rejectVerify() {
+  if (!verifyTargetLogin) return;
+  if (!currentUser || currentUser.role !== 'admin') {
+    toast('Только администратор может отклонять', true); return;
+  }
+  const u = __store.users.find(x => x.login === verifyTargetLogin);
+  if (!u) return;
+
+  if (!confirm(`Отклонить верификацию пользователя «${u.name}» (${u.login})?\nПользователь не сможет войти в систему.`)) return;
+
+  try {
+    await fbPatch(`users/${u.login}`, { status: 'rejected' });
+  } catch (e) {
+    console.error(e);
+    toast('Ошибка сохранения', true);
+    return;
+  }
+  u.status = 'rejected';
+  toast('Заявка отклонена');
+  closeVerifyModal();
+  nav('users');
+}
+
+document.getElementById('verifyModal').addEventListener('click', (e) => {
+  if (e.target.id === 'verifyModal') closeVerifyModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('verifyModal').classList.contains('active')) closeVerifyModal();
+    if (document.getElementById('deleteModal').classList.contains('active')) closeDeleteModal();
+  }
+});
 
 /* ============================================================
    Подписи
@@ -1212,11 +1240,6 @@ function confirmDelete() {
 }
 document.getElementById('deleteModal').addEventListener('click', (e) => {
   if (e.target.id === 'deleteModal') closeDeleteModal();
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.getElementById('deleteModal').classList.contains('active')) {
-    closeDeleteModal();
-  }
 });
 
 /* ============================================================
@@ -1389,7 +1412,7 @@ function renderForm(root, type) {
 }
 
 /* ============================================================
-   Просмотр документа + скачивание фото
+   Просмотр документа
    ============================================================ */
 function renderDoc(root, docId) {
   const doc = __store.docs.find(d => d.id === docId);
@@ -1552,15 +1575,15 @@ function renderUsers(root) {
     return (order[a.role] ?? 3) - (order[b.role] ?? 3);
   });
 
-  const totalActive = users.filter(u => !u.blocked).length;
+  const totalActive  = users.filter(u => !u.blocked && u.status === 'approved').length;
   const totalBlocked = users.filter(u => u.blocked).length;
   const totalPending = users.filter(u => u.status === 'pending').length;
-  const totalAdmins = users.filter(u => u.role === 'admin').length;
+  const totalAdmins  = users.filter(u => u.role === 'admin').length;
 
   const isAdmin = currentUser.role === 'admin';
   const scopeNote = isAdmin
-    ? 'Вы управляете всеми пользователями (кроме себя и системных аккаунтов).'
-    : 'Вы управляете только сотрудниками.';
+    ? 'Вы управляете всеми пользователями. Одобрять и отклонять заявки может только администратор.'
+    : 'Вы управляете только сотрудниками. Одобрять и отклонять заявки может только администратор.';
 
   root.innerHTML = `
     <div class="cards">
@@ -1596,6 +1619,7 @@ function renderUsers(root) {
             const deletable = canDeleteUser(u);
             const roleEditable = canChangeRole(u);
             const status = u.status || 'approved';
+            const verifiable = canVerifyUser(u);
 
             return `
               <tr>
@@ -1604,10 +1628,7 @@ function renderUsers(root) {
                   ${isSystem ? `<div class="perm-note">системный</div>` : ''}
                 </td>
                 <td>${esc(u.name)}${isSelf ? ' <span style="color:var(--accent-2);font-size:11px">(вы)</span>' : ''}</td>
-                <td style="font-size:12px">
-                  ${esc(u.steamid || '—')}
-                  ${u.screenshot ? `<div class="perm-note"><a class="link" onclick="viewScreenshot('${esc(u.login)}')">посмотреть скриншот</a></div>` : ''}
-                </td>
+                <td style="font-size:12px">${esc(u.steamid || '—')}</td>
                 <td>
                   ${roleEditable ? `
                     <select class="role-select" onchange="askChangeRole('${esc(u.login)}', this.value, this)">
@@ -1626,12 +1647,16 @@ function renderUsers(root) {
                 </td>
                 <td>
                   <div class="row-actions">
+                    ${verifiable
+                      ? `<button class="btn ok" style="padding:5px 10px;font-size:12px" onclick="openVerifyModal('${esc(u.login)}')">🔍 Верификация</button>`
+                      : ''}
                     ${isSelf
                       ? `<span style="color:var(--muted);font-size:12px">— это вы —</span>`
-                      : `<a class="link" style="color:${blockable ? 'var(--link)' : 'var(--muted)'};cursor:${blockable ? 'pointer' : 'not-allowed'}"
-                            ${blockable ? `onclick="askToggleBlock('${esc(u.login)}')"` : ''}>
+                      : (deletable || blockable ? '' : '')}
+                    ${!isSelf && blockable
+                      ? `<a class="link" style="color:var(--link);cursor:pointer" onclick="askToggleBlock('${esc(u.login)}')">
                            ${u.blocked ? 'Разблокировать' : 'Заблокировать'}
-                         </a>`}
+                         </a>` : ''}
                     ${!isSelf && deletable
                       ? `<button class="del-btn" title="Удалить" onclick="askDeleteUser('${esc(u.login)}')">🗑</button>`
                       : ''}
@@ -1644,21 +1669,6 @@ function renderUsers(root) {
       </table>
     </div>
   `;
-}
-
-function viewScreenshot(login) {
-  const u = __store.users.find(x => x.login === login);
-  if (!u || !u.screenshot) { toast('Скриншот отсутствует', true); return; }
-  const w = window.open('', '_blank');
-  w.document.write(`
-    <html><head><title>Скриншот таба — ${login}</title>
-    <style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh}
-    img{max-width:95vw;max-height:95vh;box-shadow:0 0 40px rgba(0,0,0,.7)}
-    </style></head><body>
-    <img src="${u.screenshot}" alt="скриншот">
-    </body></html>
-  `);
-  w.document.close();
 }
 
 async function askToggleBlock(login) {
@@ -1950,7 +1960,7 @@ function renderAbout(root) {
       </p>
       <p style="color:var(--muted);font-size:12px;border-left:3px solid var(--accent);padding-left:12px">
         <b>Верификация:</b> при регистрации указывается SteamID и прикрепляется
-        скриншот таба (F12). Заявка направляется на рассмотрение администрации.
+        скриншот таба (F12). Заявку проверяет администратор в разделе «Пользователи».
         До одобрения доступ к системе закрыт.
       </p>
 
@@ -1960,7 +1970,7 @@ function renderAbout(root) {
         <tbody>
           <tr><td>Сотрудник</td><td>Создание, просмотр и удаление только своих документов.</td></tr>
           <tr><td>Начальник ОРУ</td><td>Все документы ОРУ. Управление только сотрудниками.</td></tr>
-          <tr><td>Администратор</td><td>Полный доступ. Управление всеми пользователями.</td></tr>
+          <tr><td>Администратор</td><td>Полный доступ. Одобрение и отклонение заявок на верификацию.</td></tr>
         </tbody>
       </table>
     </div>
@@ -1990,16 +2000,8 @@ function renderAbout(root) {
     return;
   }
 
-  // Обрабатываем ссылку из письма (?verify=approve&login=XXX)
-  const fromVerify = await processVerifyUrl();
-
   overlay.classList.add('hide');
   setTimeout(() => overlay.remove(), 400);
-
-  if (fromVerify) {
-    document.getElementById('loginScreen').style.display = 'flex';
-    return;
-  }
 
   if (currentUser) {
     const fresh = __store.users.find(u => u.login === currentUser.login);
@@ -2011,8 +2013,11 @@ function renderAbout(root) {
         ? 'Учётная запись заблокирована администратором'
         : 'Сессия недействительна — войдите заново';
     } else if (fresh.status === 'pending') {
+      currentUser = fresh;
       showPendingScreen();
     } else if (fresh.status === 'rejected') {
+      currentUser = null;
+      localStorage.removeItem('oru_session');
       showPendingScreen({
         title: 'Заявка отклонена',
         text: 'Ваша заявка на верификацию была отклонена администрацией ОРУ.<br>Доступ к системе невозможен.'
