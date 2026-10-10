@@ -828,15 +828,15 @@ function nav(page) {
 }
 
 function visibleDocs() {
-  const all = [...__store.docs, ...__store.orm];
-  if (currentUser.role === 'employee') return all.filter(d => d.authorLogin === currentUser.login);
-  return all;
+  // Все авторизованные пользователи видят все документы.
+  return [...__store.docs, ...__store.orm];
 }
 function canView(doc) {
-  if (currentUser.role === 'admin' || currentUser.role === 'chief') return true;
-  return doc.authorLogin === currentUser.login;
+  // Все авторизованные пользователи видят все документы.
+  return true;
 }
 function canDelete(doc) {
+  // Удалять: свои — автор, чужие — только админ и начальник ОРУ.
   if (currentUser.role === 'admin' || currentUser.role === 'chief') return true;
   return doc.authorLogin === currentUser.login;
 }
