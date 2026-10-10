@@ -112,6 +112,15 @@
   .doc .sub{text-align:center;font-size:13px;color:#444;margin-bottom:34px}
   .doc p{margin:0 0 10px;text-align:justify}
   .doc .fill{display:inline-block;border-bottom:1px solid #666;padding:0 4px;min-width:60px;font-weight:600}
+  /* Подсказки под полями */
+  .doc .hint-under{
+    display:block;font-size:11px;color:#555;font-style:italic;
+    text-align:center;margin:-6px 0 10px;
+  }
+  .doc .hint-left{
+    display:block;font-size:11px;color:#555;font-style:italic;
+    text-align:left;margin:-6px 0 10px;
+  }
   .doc .sig{margin-top:50px;display:flex;justify-content:space-between;font-size:13px}
   .doc .sig-block{display:flex;align-items:flex-end;gap:10px}
   .doc .sig-slot{width:180px;height:60px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #333;position:relative}
@@ -204,12 +213,10 @@
   <div class="login-card">
     <h1>ОРУ УФСБ России по ДНР</h1>
     <h2>Электронный документооборот · Закрытая система</h2>
-
     <div class="auth-tabs">
       <div class="auth-tab active" data-tab="login">Вход</div>
       <div class="auth-tab" data-tab="register">Регистрация</div>
     </div>
-
     <form id="loginForm" class="auth-form active" autocomplete="off">
       <div class="field"><label>Логин</label><input type="text" id="loginUser" required></div>
       <div class="field"><label>Пароль</label><input type="password" id="loginPass" required></div>
@@ -217,7 +224,6 @@
       <div class="error" id="loginError"></div>
       <div class="hint">Доступ выдаётся администрацией ОРУ. Самостоятельная регистрация возможна только с ролью <b>«Сотрудник»</b>.</div>
     </form>
-
     <form id="registerForm" class="auth-form" autocomplete="off">
       <div class="field"><label>ФИО</label><input type="text" name="name" required></div>
       <div class="field"><label>Звание</label><input type="text" name="rank" required></div>
@@ -267,7 +273,7 @@
       <a data-page="new-koap">📝 Постановление по КоАП РФ</a>
       <a data-page="new-orm">📄 Распоряжение об ОРМ</a>
       <div class="section">Дисциплинарная практика</div>
-      <a data-page="disc" id="navDisc">📋 Реестр дисциплинарных документов</a>
+      <a data-page="disc">📋 Реестр дисциплинарных документов</a>
       <a data-page="new-rap">📝 Рапорт о проступке</a>
       <a data-page="new-prik">📄 Выписка из приказа</a>
       <div class="section">Личный раздел</div>
@@ -277,7 +283,6 @@
       <div class="section">Справочно</div>
       <a data-page="about">ℹ️ О системе</a>
     </nav>
-
     <main class="content" id="content"></main>
   </div>
 </div>
@@ -333,7 +338,6 @@ const ORM_LIST = [
   { id:'oper_osmotr',     label:'Оперативный осмотр' },
 ];
 
-/* Список дисциплинарных взысканий */
 const DISC_LIST = [
   'Выговор',
   'Строгий выговор',
@@ -347,6 +351,141 @@ async function sha256(str) {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+/* ============================================================
+   СКЛОНЕНИЯ ФИО, ЗВАНИЙ И ДОЛЖНОСТЕЙ
+   ============================================================ */
+
+/* Склонение отдельного слова по правилам русского языка.
+   mode: 'nom' | 'dat' | 'gen'
+   isName: true — слово имя собственное (фамилия), сохраняет заглавную. */
+function declineWord(word, mode, isName) {
+  if (!word) return word;
+  if (mode === 'nom') return word;
+  const orig = word;
+  // Сохраняем регистр первой буквы — но для служебных слов принудительно нижний
+  // (обрабатывается в declineRank/declinePosition)
+
+  const w = word.toLowerCase();
+  const isVowel = ch => 'аеёиоуыэюя'.includes(ch);
+  const last = w[w.length - 1];
+
+  // Особые случаи для прилагательных и причастий на -ый/-ий/-ой
+  // «старший» → «старшему», «старшего»; «младший» → «младшему» / «младшего»;
+  // «оперуполномоченный» → «оперуполномоченному» / «оперуполномоченного»
+  function declAdj(s, md) {
+    if (md === 'nom') return s;
+    // -ый / -ий → -ому (м.р. ед.ч.)
+    if (/ый$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ому' : 'ого');
+    if (/ий$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ему' : 'его');
+    if (/ой$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ому' : 'ого');
+    if (/ая$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ой' : 'ой');
+    if (/яя$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ей' : 'ей');
+    if (/ое$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ому' : 'ого');
+    if (/ее$/.test(s)) return s.slice(0, -2) + (md === 'dat' ? 'ему' : 'его');
+    return s;
+  }
+
+  // Прилагательные и причастия
+  if (/(ый|ий|ой|ая|яя|ое|ее)$/.test(w)) {
+    const res = declAdj(w, mode);
+    return isName ? res[0].toUpperCase() + res.slice(1) : res;
+  }
+
+  // Склонение существительных: одушевлённые, м.р. и ж.р.
+  // Упрощённое правило: окончания в зависимости от последней буквы.
+
+  // Если заканчивается на гласную (а, я, о, е, у, ю, ы, и, э) — особая логика
+  if (last === 'а') {
+    return w.slice(0, -1) + (mode === 'dat' ? 'е' : 'ы');
+  }
+  if (last === 'я') {
+    return w.slice(0, -1) + (mode === 'dat' ? 'е' : 'и');
+  }
+  if (last === 'о' || last === 'е' || last === 'у' || last === 'ю' ||
+      last === 'ы' || last === 'и' || last === 'э') {
+    return w; // не склоняем
+  }
+
+  // Слова на согласную (м.р.)
+  // Для мягкого знака на конце — склонение по особому правилу
+  if (last === 'ь') {
+    return w.slice(0, -1) + (mode === 'dat' ? 'ю' : 'я');
+  }
+  if (last === 'й') {
+    return w.slice(0, -1) + (mode === 'dat' ? 'ю' : 'я');
+  }
+  // Обычные м.р. на согласную — +у / +а
+  return w + (mode === 'dat' ? 'у' : 'а');
+}
+
+/* Склонение ФИО целиком — построчно: Фамилия Имя Отчество */
+function declineFio(fio, mode) {
+  if (!fio || mode === 'nom') return fio;
+  const parts = fio.trim().split(/\s+/);
+  const isFeminine = parts.some(p => /(овна|евна|инична)$/i.test(p));
+  const out = parts.map((p, i) => {
+    // Инициалы (А.А. или А.) — не склоняем
+    if (/^[А-ЯЁA-Z]\.([А-ЯЁA-Z]\.)?$/i.test(p)) return p;
+    if (/^[А-ЯЁA-Z]{1,2}$/.test(p)) return p;
+    const isName = i === 0; // фамилия — сохраняем заглавную
+    // Женские фамилии на -ова/-ева/-ина — отдельная логика
+    if (isFeminine && i === 0) {
+      const w = p;
+      if (/ова$|ева$|ёва$|ина$|ына$/i.test(w)) {
+        return w.slice(0, -1) + 'ой'; // Иванова → Ивановой
+      }
+    }
+    return declineWord(p, mode, isName);
+  });
+  // Возвращаем с заглавной первой буквы
+  const res = out.join(' ');
+  return res.charAt(0).toUpperCase() + res.slice(1);
+}
+
+/* Склонение звания — с принудительной нижней буквой, чтобы «лейтенант» в тексте был с маленькой */
+function declineRank(rank, mode) {
+  if (!rank) return rank;
+  const r = rank.trim();
+  if (mode === 'nom') return r.toLowerCase();
+  // Составные звания типа «старший лейтенант», «генерал-майор»
+  const parts = r.split(/(\s+|-)/); // сохраняем пробелы и дефисы
+  const out = parts.map(p => {
+    if (/^\s+$/.test(p) || p === '-') return p;
+    return declineWord(p, mode, false);
+  });
+  return out.join('').toLowerCase();
+}
+
+/* Склонение должности — в нижнем регистре */
+function declinePosition(pos, mode) {
+  if (!pos) return pos;
+  const p = pos.trim();
+  if (mode === 'nom') return p.toLowerCase();
+  // Простые должности — первое слово склоняем, остальные оставляем
+  const parts = p.split(/\s+/);
+  const first = declineWord(parts[0], mode, false);
+  return [first, ...parts.slice(1)].join(' ').toLowerCase();
+}
+
+/* Универсальная функция: применяет падеж и нормализует регистр.
+   type: 'fio' | 'rank' | 'position' | 'plain'
+   mode: 'nom' | 'dat' | 'gen' */
+function inCase(text, type, mode) {
+  if (!text) return text;
+  if (mode === 'nom') {
+    // В именительном — тоже нормализуем регистр по типу
+    if (type === 'rank' || type === 'position') return text.trim().toLowerCase();
+    return text.trim();
+  }
+  if (type === 'fio') return declineFio(text, mode);
+  if (type === 'rank') return declineRank(text, mode);
+  if (type === 'position') return declinePosition(text, mode);
+  return text;
+}
+
+/* ============================================================
+   Хранилище
+   ============================================================ */
 const __store = (function() {
   const data = { oru_users: [], oru_docs: [], oru_signatures: {}, oru_orm: [], oru_disc: [] };
   return {
@@ -512,7 +651,6 @@ const CHIEF_ADDRESSEE = {
 };
 function getChiefData(){ return CHIEF_ADDRESSEE; }
 
-/* Адресат для дисциплинарных документов — командир ЦСН «А» */
 const DISC_ADDRESSEE = {
   position:'Командиру Центра специального назначения «А»',
   org:'ФСБ России',
@@ -550,7 +688,6 @@ function fmtDate(iso) {
   return `${g('day')}.${g('month')}.${g('year')} ${g('hour')}:${g('minute')}`;
 }
 
-/* Нумерация основной (УК, КоАП, ОРМ) */
 function nextDocNumber() {
   let maxNum = 0;
   [...__store.docs, ...__store.orm].forEach(d => {
@@ -559,7 +696,6 @@ function nextDocNumber() {
   });
   return String(maxNum + 1).padStart(3, '0');
 }
-/* Нумерация дисциплинарных (с префиксом Д-) */
 function nextDiscNumber() {
   let maxNum = 0;
   __store.disc.forEach(d => {
@@ -916,25 +1052,18 @@ function confirmDelete() {
   arr.splice(idx, 1);
   const node = kind === 'orm' ? 'orm' : kind === 'disc' ? 'disciplinary' : 'docs';
   fbDelete(`${node}/${id}`).catch(e => console.error(e));
-  const wasOnViewPage = document.querySelector('nav.side a.active')?.dataset.page?.startsWith('view-') ||
-                        document.querySelector('nav.side a.active')?.dataset.page?.startsWith('orm-') ||
-                        document.querySelector('nav.side a.active')?.dataset.page?.startsWith('rap-') ||
-                        document.querySelector('nav.side a.active')?.dataset.page?.startsWith('prik-');
+  const wasOnViewPage = ['view-','orm-','rap-','prik-'].some(pfx =>
+    document.querySelector('nav.side a.active')?.dataset.page?.startsWith(pfx));
   closeDeleteModal(); toast('Документ удалён из реестра');
-  if (wasOnViewPage) {
-    if (kind === 'disc') nav('disc');
-    else nav('dashboard');
-  } else {
-    if (kind === 'disc') renderDiscRegistry(document.getElementById('content'));
-    else renderDashboard(document.getElementById('content'));
-  }
+  if (wasOnViewPage) { if (kind === 'disc') nav('disc'); else nav('dashboard'); }
+  else { if (kind === 'disc') renderDiscRegistry(document.getElementById('content')); else renderDashboard(document.getElementById('content')); }
 }
 document.getElementById('deleteModal').addEventListener('click', (e) => {
   if (e.target.id === 'deleteModal') closeDeleteModal();
 });
 
 /* ============================================================
-   Дашборд (УК / КоАП / ОРМ)
+   Дашборд
    ============================================================ */
 function renderDashboard(root) {
   const docs = visibleDocs().slice().sort((a, b) => {
@@ -1092,7 +1221,7 @@ function renderForm(root, type) {
 }
 
 /* ============================================================
-   Просмотр УК / КоАП
+   Просмотр УК / КоАП — с подсказками под полями
    ============================================================ */
 function renderDoc(root, docId) {
   const doc = __store.docs.find(d => d.id === docId);
@@ -1136,10 +1265,16 @@ function renderDoc(root, docId) {
 
       <h1>ПОСТАНОВЛЕНИЕ</h1>
       <div class="sub">${isUK ? 'о применении меры пресечения по уголовному делу (УК РФ)' : 'по делу об административном правонарушении (КоАП РФ)'}</div>
-      <p>Я, <span class="fill">${esc(f.rank_investigator)}</span> <span class="fill">${esc(f.fio_investigator)}</span>, ${esc(f.position_investigator || '')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')}, рассмотрев материалы ${isUK ? 'уголовного дела' : 'дела об административном правонарушении'},</p>
+      <p>Я, <span class="fill">${esc(f.rank_investigator)}</span> <span class="fill">${esc(f.fio_investigator)}</span>,</p>
+      <span class="hint-under">(звание, фамилия, имя, отчество)</span>
+      <p>${esc(f.position_investigator || '')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')}, рассмотрев материалы ${isUK ? 'уголовного дела' : 'дела об административном правонарушении'},</p>
+      <span class="hint-under">(должность, подразделение)</span>
       <p><b>УСТАНОВИЛ:</b></p>
       <p>${esc(f.circumstances)}</p>
-      <p>Военнослужащий <span class="fill">${esc(f.fio_detained)}</span>, ${f.rank_detained ? `звание: <span class="fill">${esc(f.rank_detained)}</span>,` : ''} должность: <span class="fill">${esc(f.position_detained)}</span>, подразделение: <span class="fill">${esc(f.unit_detained)}</span>, совершил деяние, предусмотренное <span class="fill">${esc(f.article)}</span>.</p>
+      <p>Военнослужащий <span class="fill">${esc(f.fio_detained)}</span>,</p>
+      <span class="hint-under">(фамилия, имя, отчество задержанного)</span>
+      <p>${f.rank_detained ? `звание: <span class="fill">${esc(f.rank_detained)}</span>,` : ''} должность: <span class="fill">${esc(f.position_detained)}</span>, подразделение: <span class="fill">${esc(f.unit_detained)}</span>, совершил деяние, предусмотренное <span class="fill">${esc(f.article)}</span>.</p>
+      <span class="hint-under">(звание, должность, подразделение, статья)</span>
       <p>На основании изложенного и руководствуясь ${isUK ? 'ст. 91, 92, 108 УПК РФ' : 'ст. 29.9, 29.10 КоАП РФ'},</p>
       <p><b>ПОСТАНОВИЛ:</b></p>
       <p>${measureText}</p>
@@ -1246,7 +1381,7 @@ function renderOrmForm(root) {
 }
 
 /* ============================================================
-   Просмотр ОРМ
+   Просмотр ОРМ — со склонениями в дательном и родительном
    ============================================================ */
 function renderOrmDoc(root, docId) {
   const doc = __store.orm.find(d => d.id === docId);
@@ -1258,6 +1393,15 @@ function renderOrmDoc(root, docId) {
   const chief = getChiefData();
   const docNumber = doc.number || '____';
   const deletable = canDelete(doc);
+
+  // Подготовка склонённых форм для бланка
+  const posDative = inCase(f.position_chief, 'position', 'dat');
+  const rankDative = inCase(f.rank_chief, 'rank', 'dat');
+  const fioDative = inCase(f.fio_chief, 'fio', 'dat');
+
+  const posNom = inCase(f.position_chief, 'position', 'nom');
+  const rankNom = inCase(f.rank_chief, 'rank', 'nom');
+  const fioNom = inCase(f.fio_chief, 'fio', 'nom');
 
   root.innerHTML = `
     <div class="viewer-toolbar">
@@ -1297,9 +1441,9 @@ function renderOrmDoc(root, docId) {
       <div style="text-align:center;font-size:11px;color:#444;margin-bottom:22px">(место составления)</div>
 
       <p style="text-align:left">
-        Я, <span class="orm-line">${esc(f.position_chief || '')}</span>
-        <span class="orm-line">${esc(f.rank_chief || '')}</span>
-        <span class="orm-line">${esc(f.fio_chief || '')}</span>,
+        Я, <span class="orm-line">${esc(posNom)}</span>
+        <span class="orm-line">${esc(rankNom)}</span>
+        <span class="orm-line">${esc(fioNom)}</span>,
       </p>
       <div class="orm-small">(должность, специальное звание, Ф.И.О. руководителя)</div>
 
@@ -1346,10 +1490,10 @@ function renderOrmDoc(root, docId) {
 
       <div class="sig">
         <div>
-          ${esc(f.position_chief || '')} ${esc(f.unit_chief || '')}
+          ${esc(posNom)} ${esc(f.unit_chief || '')}
           <div class="sig-block" style="margin-top:10px">
             <div class="sig-slot ${sig ? '' : 'empty'}">${sig ? `<img src="${sig}" alt="подпись">` : ''}</div>
-            <div class="sig-name">/ ${esc(f.fio_chief || '')} /</div>
+            <div class="sig-name">/ ${esc(fioNom)} /</div>
           </div>
         </div>
         <div style="text-align:right">«${todayStr()}»</div>
@@ -1444,10 +1588,10 @@ function renderRaportForm(root) {
         <div class="field full"><label>Краткое изложение проступка</label><textarea name="incident_text" rows="4" required></textarea></div>
 
         <div class="section-title">Правовая квалификация и предложение</div>
-        <div class="field full"><label>Ссылка на норму (Дисциплинарный устав ВС РФ, ФЗ «О статусе военнослужащих» и т.д.)</label><input name="law_ref" required placeholder="напр. ст. 28.5 ФЗ № 76-ФЗ, ст. 28 ДУ ВС РФ"></div>
+        <div class="field full"><label>Ссылка на норму</label><input name="law_ref" required placeholder="напр. ст. 28.5 ФЗ № 76-ФЗ, ст. 28 ДУ ВС РФ"></div>
         <div class="field">
           <label>Предлагаемое взыскание</label>
-          <select name="punishment" id="rapPunishment" required>
+          <select name="punishment" required>
             ${DISC_LIST.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('')}
           </select>
         </div>
@@ -1485,7 +1629,7 @@ function renderRaportForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР: Рапорт о проступке
+   ПРОСМОТР: Рапорт — со склонениями и подсказками
    ============================================================ */
 function renderRaportDoc(root, docId) {
   const doc = __store.disc.find(d => d.id === docId && d.type === 'RAP');
@@ -1493,10 +1637,23 @@ function renderRaportDoc(root, docId) {
   if (!canView(doc)) { root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>'; return; }
   const f = doc.fields;
   const sig = getSignature(doc.authorLogin);
-  const chief = getChiefData();
   const disc = getDiscData();
   const docNumber = doc.number || 'Д-___';
   const deletable = canDelete(doc);
+
+  // Именительный падеж (для блока «совершил проступок»)
+  const authorRankNom = inCase(f.author_rank, 'rank', 'nom');
+  const authorPosNom  = inCase(f.author_position, 'position', 'nom');
+  const authorFioNom  = inCase(f.author_fio, 'fio', 'nom');
+
+  const offRankNom = inCase(f.offender_rank, 'rank', 'nom');
+  const offPosNom  = inCase(f.offender_position, 'position', 'nom');
+  const offFioNom  = inCase(f.offender_fio, 'fio', 'nom');
+
+  // Дательный падеж (для блока «объявить военнослужащему …»)
+  const offRankDat = inCase(f.offender_rank, 'rank', 'dat');
+  const offFioDat  = inCase(f.offender_fio, 'fio', 'dat');
+  const offPosDat  = inCase(f.offender_position, 'position', 'dat');
 
   root.innerHTML = `
     <div class="viewer-toolbar">
@@ -1526,44 +1683,58 @@ function renderRaportDoc(root, docId) {
       <div class="sub">о выявленном дисциплинарном проступке</div>
 
       <p>
-        Я, <span class="fill">${esc(f.author_rank)}</span>
-        <span class="fill">${esc(f.author_fio)}</span>,
-        ${esc(f.author_position || '')} ${esc(f.author_unit || '')}, в порядке исполнения
+        Я, <span class="fill">${esc(authorRankNom)}</span>
+        <span class="fill">${esc(authorFioNom)}</span>,
+      </p>
+      <span class="hint-under">(звание, фамилия, имя, отчество рапортующего)</span>
+      <p>
+        ${esc(authorPosNom)} ${esc(f.author_unit || '')}, в порядке исполнения
         своих служебных обязанностей докладываю о нижеследующем.
       </p>
+      <span class="hint-under">(должность, подразделение)</span>
 
       <p>
         <b>${esc(f.incident_date_place)}</b> военнослужащий
-        <span class="fill">${esc(f.offender_rank)}</span>
-        <span class="fill">${esc(f.offender_fio)}</span>,
-        ${esc(f.offender_position || '')} ${esc(f.offender_unit || '')},
+        <span class="fill">${esc(offRankNom)}</span>
+        <span class="fill">${esc(offFioNom)}</span>,
+      </p>
+      <span class="hint-under">(звание, фамилия, имя, отчество нарушителя)</span>
+      <p>
+        ${esc(offPosNom)} ${esc(f.offender_unit || '')},
         совершил дисциплинарный проступок, выразившийся в следующем:
       </p>
+      <span class="hint-under">(должность, подразделение)</span>
 
       <p>${esc(f.incident_text)}</p>
+      <span class="hint-under">(краткое изложение проступка)</span>
 
       <p>
         Указанные действия (бездействие) содержат признаки нарушения
         <span class="fill">${esc(f.law_ref)}</span>.
       </p>
+      <span class="hint-under">(норма права)</span>
 
       <p>
         На основании изложенного, руководствуясь Дисциплинарным уставом Вооружённых Сил
         Российской Федерации, <b>предлагаю</b> объявить военнослужащему
-        <span class="fill">${esc(f.offender_rank)}</span>
-        <span class="fill">${esc(f.offender_fio)}</span>
+        <span class="fill">${esc(offRankDat)}</span>
+        <span class="fill">${esc(offFioDat)}</span>
+      </p>
+      <span class="hint-under">(звание и ФИО в дательном падеже — вписаны автоматически)</span>
+      <p>
         дисциплинарное взыскание в виде:
         <span class="fill">${esc(f.punishment)}</span>.
       </p>
+      <span class="hint-under">(вид взыскания)</span>
 
       <p><b>Обоснование:</b> ${esc(f.reason)}</p>
 
       <div class="sig">
         <div>
-          ${esc(f.author_position || 'Сотрудник ОСБ')} ${esc(f.author_unit || '')}
+          ${esc(authorPosNom)} ${esc(f.author_unit || '')}
           <div class="sig-block" style="margin-top:10px">
             <div class="sig-slot ${sig ? '' : 'empty'}">${sig ? `<img src="${sig}" alt="подпись">` : ''}</div>
-            <div class="sig-name">/ ${esc(f.author_fio)} /</div>
+            <div class="sig-name">/ ${esc(authorFioNom)} /</div>
           </div>
         </div>
         <div style="text-align:right">«${todayStr()}»</div>
@@ -1573,7 +1744,7 @@ function renderRaportDoc(root, docId) {
 }
 
 /* ============================================================
-   ФОРМА: Выписка из приказа о наложении взыскания
+   ФОРМА: Выписка из приказа
    ============================================================ */
 function renderPrikazForm(root) {
   const hasSig = !!getSignature(currentUser.login);
@@ -1643,7 +1814,7 @@ function renderPrikazForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР: Выписка из приказа
+   ПРОСМОТР: Выписка из приказа — со склонениями
    ============================================================ */
 function renderPrikazDoc(root, docId) {
   const doc = __store.disc.find(d => d.id === docId && d.type === 'PRIK');
@@ -1654,6 +1825,10 @@ function renderPrikazDoc(root, docId) {
   const chief = getChiefData();
   const docNumber = doc.number || 'Д-___';
   const deletable = canDelete(doc);
+
+  const offRankDat = inCase(f.offender_rank, 'rank', 'dat');
+  const offFioDat  = inCase(f.offender_fio, 'fio', 'dat');
+  const offPosNom  = inCase(f.offender_position, 'position', 'nom');
 
   root.innerHTML = `
     <div class="viewer-toolbar">
@@ -1686,27 +1861,34 @@ function renderPrikazDoc(root, docId) {
         <b>${esc(f.prikaz_issuer || '')}</b><br>
         от «${esc(f.prikaz_date || '')}» ${esc(f.prikaz_number || '')}
       </p>
+      <span class="hint-under">(издавший орган, дата и номер приказа)</span>
 
       <p style="text-align:justify">
         В соответствии с Дисциплинарным уставом Вооружённых Сил Российской Федерации,
         за совершение дисциплинарного проступка —
         ${esc(f.reason || '')},
       </p>
+      <span class="hint-under">(краткое изложение проступка)</span>
 
       <p style="text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin:24px 0 14px">ПРИКАЗЫВАЮ:</p>
 
       <p style="text-align:justify">
         Объявить военнослужащему
-        <span class="fill">${esc(f.offender_rank)}</span>
-        <span class="fill">${esc(f.offender_fio)}</span>,
-        ${esc(f.offender_position || '')} ${esc(f.offender_unit || '')},
+        <span class="fill">${esc(offRankDat)}</span>
+        <span class="fill">${esc(offFioDat)}</span>,
+      </p>
+      <span class="hint-under">(звание и ФИО в дательном падеже — вписаны автоматически)</span>
+      <p style="text-align:justify">
+        ${esc(offPosNom)} ${esc(f.offender_unit || '')},
         дисциплинарное взыскание в виде:
         <span class="fill">${esc(f.punishment)}</span>.
       </p>
+      <span class="hint-under">(должность, подразделение, вид взыскания)</span>
 
       <p style="text-align:justify">
         <b>Основание:</b> ${esc(f.basis || '')}.
       </p>
+      <span class="hint-under">(основание)</span>
 
       <div class="sig">
         <div>
@@ -2019,10 +2201,7 @@ function renderAbout(root) {
       <h3 style="margin-top:0;color:var(--accent-2)">О системе</h3>
       <p style="color:var(--muted)">Демонстрационный прототип внутренней системы электронного документооборота. Данные хранятся в Firebase Realtime Database. Все даты — по московскому времени (МСК, UTC+3).</p>
       <p style="color:var(--muted);font-size:12px;border-left:3px solid var(--accent);padding-left:12px">
-        <b>Доступ к документам:</b> все авторизованные пользователи видят все документы. Удаление: свои — автору, любые — администратору и начальнику ОРУ.
-      </p>
-      <p style="color:var(--muted);font-size:12px;border-left:3px solid var(--accent);padding-left:12px">
-        <b>Верификация:</b> при регистрации указывается SteamID и прикрепляется скриншот таба (F12). Заявку проверяет администратор в разделе «Пользователи».
+        <b>Автосклонение:</b> бланки автоматически ставят звания, ФИО и должности в нужный падеж (именительный, дательный, родительный) и нормализуют регистр — чтобы в тексте было «военнослужащему лейтенанту Петрову П.П.», а не «военнослужащему Лейтенанту Петров П.П.».
       </p>
       <h4 style="margin:22px 0 6px;color:var(--accent-2);font-size:13px;letter-spacing:1px;text-transform:uppercase">Роли и права</h4>
       <table>
@@ -2039,8 +2218,8 @@ function renderAbout(root) {
         <tbody>
           <tr><td>УК РФ</td><td>Постановление об аресте по уголовному делу.</td></tr>
           <tr><td>КоАП РФ</td><td>Постановление по делу об административном правонарушении.</td></tr>
-          <tr><td>ОРМ</td><td>Распоряжение о проведении гласного/внегласного оперативно-розыскного мероприятия (ст. 6 ФЗ-144).</td></tr>
-          <tr><td>Рапорт</td><td>Рапорт ОСБ о выявленном дисциплинарном проступке (Дисциплинарный устав ВС РФ).</td></tr>
+          <tr><td>ОРМ</td><td>Распоряжение о проведении гласного/внегласного ОРМ (ст. 6 ФЗ-144).</td></tr>
+          <tr><td>Рапорт</td><td>Рапорт ОСБ о выявленном дисциплинарном проступке.</td></tr>
           <tr><td>Выписка из приказа</td><td>Выписка из приказа командира о наложении дисциплинарного взыскания.</td></tr>
         </tbody>
       </table>
