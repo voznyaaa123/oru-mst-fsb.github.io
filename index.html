@@ -485,19 +485,22 @@ function getChiefData(){ return CHIEF_ADDRESSEE; }
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
 /* === ДАТЫ В МОСКОВСКОМ ВРЕМЕНИ === */
-function dateFullRu() {
+/* dateFullRu принимает дату документа (createdAt). Если не передана — берётся текущая. */
+function dateFullRu(dateInput) {
+  const src = dateInput ? new Date(dateInput) : new Date();
   const parts = new Intl.DateTimeFormat('ru-RU', {
     timeZone: MSK_TZ, day: '2-digit', month: 'numeric', year: 'numeric'
-  }).formatToParts(new Date());
+  }).formatToParts(src);
   const day = parts.find(p => p.type === 'day').value;
   const month = parseInt(parts.find(p => p.type === 'month').value, 10) - 1;
   const year = parts.find(p => p.type === 'year').value;
   return `«${day}» ${MONTHS_GEN[month]} ${year} г.`;
 }
-function todayStr() {
+function todayStr(dateInput) {
+  const src = dateInput ? new Date(dateInput) : new Date();
   return new Intl.DateTimeFormat('ru-RU', {
     timeZone: MSK_TZ, day: '2-digit', month: '2-digit', year: 'numeric'
-  }).format(new Date());
+  }).format(src);
 }
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -1041,7 +1044,7 @@ function renderForm(root, type) {
 }
 
 /* ============================================================
-   Просмотр УК / КоАП
+   Просмотр УК / КоАП — дата в шапке = дата создания
    ============================================================ */
 function renderDoc(root, docId) {
   const doc = __store.docs.find(d => d.id === docId);
@@ -1073,7 +1076,7 @@ function renderDoc(root, docId) {
         <div class="doc-header-left">
           <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
           <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
-          <div class="org-date">${dateFullRu()} / № ${esc(docNumber)} 283048</div>
+          <div class="org-date">${dateFullRu(doc.createdAt)} / № ${esc(docNumber)} 283048</div>
           <div class="org-city">г. Мариуполь</div>
         </div>
         <div class="addressee">
@@ -1195,7 +1198,7 @@ function renderOrmForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР ОРМ
+   ПРОСМОТР ОРМ — дата в шапке = дата создания
    ============================================================ */
 function renderOrmDoc(root, docId) {
   const doc = __store.orm.find(d => d.id === docId);
@@ -1224,7 +1227,7 @@ function renderOrmDoc(root, docId) {
         <div class="doc-header-left">
           <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
           <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
-          <div class="org-date">${dateFullRu()} / № ${esc(docNumber)} 283048</div>
+          <div class="org-date">${dateFullRu(doc.createdAt)} / № ${esc(docNumber)} 283048</div>
           <div class="org-city">г. Мариуполь</div>
         </div>
         <div class="addressee">
