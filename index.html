@@ -134,6 +134,18 @@
   .check-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#0d1620;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px;line-height:1.35;transition:border-color .15s,background .15s;user-select:none}
   .check-item:hover{border-color:var(--accent)}
   .check-item input{display:none}
+    /* Круглая отметка для радио-выбора ОРМ */
+  .check-item .dot {
+    flex: 0 0 16px; width: 16px; height: 16px;
+    border: 2px solid var(--border); border-radius: 50%;
+    position: relative; transition: border-color .15s;
+    margin-top: 1px;
+  }
+  .check-item input:checked + .dot { border-color: var(--accent); }
+  .check-item input:checked + .dot::after {
+    content: ""; position: absolute; inset: 3px;
+    background: var(--accent); border-radius: 50%;
+  }
   .check-item .box{flex:0 0 16px;width:16px;height:16px;border:2px solid var(--border);border-radius:3px;position:relative;transition:border-color .15s;margin-top:1px}
   .check-item input:checked + .box{border-color:var(--accent);background:var(--accent)}
   .check-item input:checked + .box::after{content:"✓";position:absolute;inset:-3px 0 0 0;color:#1a1a1a;font-size:12px;font-weight:700;text-align:center;line-height:14px}
@@ -1141,9 +1153,9 @@ function renderOrmForm(root) {
         </div>
 
         <div class="field full">
-          <label>Виды ОРМ (ст. 6 ФЗ-144)</label>
+        <label>Вид ОРМ (ст. 6 ФЗ-144) — выберите одно</label>
           <div class="check-grid" id="ormCheckList">
-            ${ORM_LIST.map(o => `<label class="check-item"><input type="checkbox" name="orm_kinds" value="${esc(o.label)}"><span class="box"></span><span>${esc(o.label)}</span></label>`).join('')}
+            ${ORM_LIST.map(o => `<label class="check-item"><input type="radio" name="orm_kind" value="${esc(o.label)}" required><span class="dot"></span><span>${esc(o.label)}</span></label>`).join('')}
           </div>
         </div>
 
@@ -1169,13 +1181,13 @@ function renderOrmForm(root) {
   });
   root.querySelectorAll('.radio-item').forEach(el => el.classList.toggle('selected', el.querySelector('input').checked));
 
-  document.getElementById('ormForm').addEventListener('submit', async (e) => {
+    document.getElementById('ormForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const fields = Object.fromEntries(fd.entries());
-    const kinds = fd.getAll('orm_kinds');
-    if (kinds.length === 0) { toast('Выберите хотя бы один вид ОРМ', true); return; }
-    const ormKindLabel = kinds.join('; ');
+    const ormKind = String(fields.orm_kind || '').trim();
+    if (!ormKind) { toast('Выберите вид ОРМ', true); return; }
+    const ormKindLabel = ormKind;
     const targetLine = String(fields.target || '').split('\n')[0].slice(0, 80);
     const docNumber = nextDocNumber();
     const doc = {
