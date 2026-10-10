@@ -481,8 +481,14 @@ function getChiefData(){ return CHIEF_ADDRESSEE; }
 
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 function dateFullRu() {
-  const d = new Date(); const p = n => String(n).padStart(2,'0');
-  return `«${p(d.getDate())}» ${MONTHS_GEN[d.getMonth()]} ${d.getFullYear()} г.`;
+  const parts = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: '2-digit', month: 'numeric', year: 'numeric'
+  }).formatToParts(new Date());
+  const day = parts.find(p => p.type === 'day').value;
+  const month = parseInt(parts.find(p => p.type === 'month').value, 10) - 1;
+  const year = parts.find(p => p.type === 'year').value;
+  return `«${day}» ${MONTHS_GEN[month]} ${year} г.`;
 }
 function roleLabel(r){return r==='admin'?'Администратор':r==='chief'?'Начальник ОРУ':'Сотрудник'}
 function roleBadgeClass(r){return r==='admin'?'role-admin':r==='chief'?'role-chief':'role-employee'}
@@ -495,8 +501,13 @@ function toast(msg,isErr){
 }
 function fmtDate(iso){
   if(!iso) return '—';
-  const d=new Date(iso); const p=n=>String(n).padStart(2,'0');
-  return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  const parts = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(new Date(iso));
+  const g = t => (parts.find(p => p.type === t) || {}).value || '';
+  return `${g('day')}.${g('month')}.${g('year')} ${g('hour')}:${g('minute')}`;
 }
 function todayStr(){
   const d=new Date(); const p=n=>String(n).padStart(2,'0');
