@@ -134,21 +134,12 @@
   .check-item{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#0d1620;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px;line-height:1.35;transition:border-color .15s,background .15s;user-select:none}
   .check-item:hover{border-color:var(--accent)}
   .check-item input{display:none}
-    /* Круглая отметка для радио-выбора ОРМ */
-  .check-item .dot {
-    flex: 0 0 16px; width: 16px; height: 16px;
-    border: 2px solid var(--border); border-radius: 50%;
-    position: relative; transition: border-color .15s;
-    margin-top: 1px;
-  }
-  .check-item input:checked + .dot { border-color: var(--accent); }
-  .check-item input:checked + .dot::after {
-    content: ""; position: absolute; inset: 3px;
-    background: var(--accent); border-radius: 50%;
-  }
   .check-item .box{flex:0 0 16px;width:16px;height:16px;border:2px solid var(--border);border-radius:3px;position:relative;transition:border-color .15s;margin-top:1px}
   .check-item input:checked + .box{border-color:var(--accent);background:var(--accent)}
   .check-item input:checked + .box::after{content:"✓";position:absolute;inset:-3px 0 0 0;color:#1a1a1a;font-size:12px;font-weight:700;text-align:center;line-height:14px}
+  .check-item .dot{flex:0 0 16px;width:16px;height:16px;border:2px solid var(--border);border-radius:50%;position:relative;transition:border-color .15s;margin-top:1px}
+  .check-item input:checked + .dot{border-color:var(--accent)}
+  .check-item input:checked + .dot::after{content:"";position:absolute;inset:3px;background:var(--accent);border-radius:50%}
   .check-item.selected{border-color:var(--accent);background:#1a2533}
   .toast{position:fixed;bottom:24px;right:24px;background:var(--ok);color:#fff;padding:12px 18px;border-radius:4px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(20px);transition:all .3s;pointer-events:none;z-index:999}
   .toast.show{opacity:1;transform:translateY(0)}
@@ -317,8 +308,6 @@
    НАСТРОЙКИ
    ============================================================ */
 const FIREBASE_DB_URL = 'https://mst-oru-fsb-default-rtdb.europe-west1.firebasedatabase.app';
-
-/* Московское время: все даты — через этот часовой пояс, независимо от ПК пользователя */
 const MSK_TZ = 'Europe/Moscow';
 
 const ORM_LIST = [
@@ -497,7 +486,6 @@ function getChiefData(){ return CHIEF_ADDRESSEE; }
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
 /* === ДАТЫ В МОСКОВСКОМ ВРЕМЕНИ === */
-/* dateFullRu принимает дату документа (createdAt). Если не передана — берётся текущая. */
 function dateFullRu(dateInput) {
   const src = dateInput ? new Date(dateInput) : new Date();
   const parts = new Intl.DateTimeFormat('ru-RU', {
@@ -525,9 +513,7 @@ function fmtDate(iso) {
   return `${g('day')}.${g('month')}.${g('year')} ${g('hour')}:${g('minute')}`;
 }
 
-/* === НУМЕРАЦИЯ БЕЗ ДУБЛЕЙ И ПРОПУСКОВ ===
-   Единый счётчик по всем документам (УК + КоАП + ОРМ).
-   Номер = max(все существующие числа) + 1. */
+/* === НУМЕРАЦИЯ === */
 function nextDocNumber() {
   let maxNum = 0;
   [...__store.docs, ...__store.orm].forEach(d => {
@@ -839,16 +825,17 @@ function nav(page) {
   else if (page.startsWith('orm-'))    renderOrmDoc(c, page.substring(4));
 }
 
+/* ==== ВИДИМОСТЬ И ПРАВА ==== */
+/* Все авторизованные пользователи видят все документы. */
 function visibleDocs() {
-  // Все авторизованные пользователи видят все документы.
   return [...__store.docs, ...__store.orm];
 }
 function canView(doc) {
-  // Все авторизованные пользователи видят все документы.
+  // Все авторизованные видят все документы.
   return true;
 }
 function canDelete(doc) {
-  // Удалять: свои — автор, чужие — только админ и начальник ОРУ.
+  // Удаление: админ/начальник ОРУ — любые; сотрудник — только свои.
   if (currentUser.role === 'admin' || currentUser.role === 'chief') return true;
   return doc.authorLogin === currentUser.login;
 }
@@ -892,7 +879,7 @@ document.getElementById('deleteModal').addEventListener('click', (e) => {
 });
 
 /* ============================================================
-   Дашборд — сортировка по номеру (новые сверху)
+   Дашборд
    ============================================================ */
 function renderDashboard(root) {
   const docs = visibleDocs().slice().sort((a, b) => {
@@ -1121,7 +1108,7 @@ function renderDoc(root, docId) {
 }
 
 /* ============================================================
-   ФОРМА ОРМ
+   ФОРМА ОРМ — выбор одного вида (радиокнопки)
    ============================================================ */
 function renderOrmForm(root) {
   const hasSig = !!getSignature(currentUser.login);
@@ -1153,7 +1140,7 @@ function renderOrmForm(root) {
         </div>
 
         <div class="field full">
-        <label>Вид ОРМ (ст. 6 ФЗ-144) — выберите одно</label>
+          <label>Вид ОРМ (ст. 6 ФЗ-144) — выберите одно</label>
           <div class="check-grid" id="ormCheckList">
             ${ORM_LIST.map(o => `<label class="check-item"><input type="radio" name="orm_kind" value="${esc(o.label)}" required><span class="dot"></span><span>${esc(o.label)}</span></label>`).join('')}
           </div>
@@ -1181,7 +1168,7 @@ function renderOrmForm(root) {
   });
   root.querySelectorAll('.radio-item').forEach(el => el.classList.toggle('selected', el.querySelector('input').checked));
 
-    document.getElementById('ormForm').addEventListener('submit', async (e) => {
+  document.getElementById('ormForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const fields = Object.fromEntries(fd.entries());
@@ -1195,7 +1182,7 @@ function renderOrmForm(root) {
       type: 'ORM', number: docNumber,
       authorLogin: currentUser.login, authorName: currentUser.name, authorRank: currentUser.rank,
       createdAt: new Date().toISOString(),
-      fields: { ...fields, ormKinds: kinds, ormKindLabel, targetLine },
+      fields: { ...fields, ormKindLabel, targetLine },
     };
     try { await fbPut(`orm/${doc.id}`, {
       id:doc.id, type:doc.type, number:doc.number,
@@ -1210,7 +1197,7 @@ function renderOrmForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР ОРМ — дата в шапке = дата создания
+   ПРОСМОТР ОРМ
    ============================================================ */
 function renderOrmDoc(root, docId) {
   const doc = __store.orm.find(d => d.id === docId);
@@ -1254,7 +1241,7 @@ function renderOrmDoc(root, docId) {
       </h1>
       <div class="sub" style="text-align:center;font-size:14px;margin-bottom:28px">
         о проведении ${esc(f.glastnost || 'гласного')} оперативно-розыскного мероприятия —
-        обследование помещений, зданий, сооружений, участков местности и транспортных средств
+        ${esc(f.ormKindLabel || '')}
       </div>
 
       <div style="text-align:center;margin-top:4px;margin-bottom:2px;font-weight:600">${esc(f.place || 'г. Мариуполь')}</div>
@@ -1618,16 +1605,19 @@ function renderAbout(root) {
   root.innerHTML = `
     <div class="panel" style="padding:26px;max-width:820px">
       <h3 style="margin-top:0;color:var(--accent-2)">О системе</h3>
-      <p style="color:var(--muted)">Демонстрационный прототип внутренней системы электронного документооборота. Данные хранятся в Firebase Realtime Database. Все даты отображаются по московскому времени (МСК, UTC+3).</p>
+      <p style="color:var(--muted)">Демонстрационный прототип внутренней системы электронного документооборота. Данные хранятся в Firebase Realtime Database. Все даты — по московскому времени (МСК, UTC+3).</p>
       <p style="color:var(--muted);font-size:12px;border-left:3px solid var(--accent);padding-left:12px">
-        <b>Верификация:</b> при регистрации указывается SteamID и прикрепляется скриншот таба (F12). Заявку проверяет администратор в разделе «Пользователи». До одобрения доступ к системе закрыт.
+        <b>Доступ к документам:</b> все авторизованные пользователи видят все документы. Удаление: свои — автору, любые — администратору и начальнику ОРУ.
+      </p>
+      <p style="color:var(--muted);font-size:12px;border-left:3px solid var(--accent);padding-left:12px">
+        <b>Верификация:</b> при регистрации указывается SteamID и прикрепляется скриншот таба (F12). Заявку проверяет администратор в разделе «Пользователи».
       </p>
       <h4 style="margin:22px 0 6px;color:var(--accent-2);font-size:13px;letter-spacing:1px;text-transform:uppercase">Роли и права</h4>
       <table>
         <thead><tr><th>Роль</th><th>Права</th></tr></thead>
         <tbody>
-          <tr><td>Сотрудник</td><td>Создание, просмотр и удаление только своих документов.</td></tr>
-          <tr><td>Начальник ОРУ</td><td>Все документы ОРУ. Управление только сотрудниками.</td></tr>
+          <tr><td>Сотрудник</td><td>Видит все документы. Создаёт, просматривает и удаляет только свои.</td></tr>
+          <tr><td>Начальник ОРУ</td><td>Видит и удаляет все документы ОРУ. Управление только сотрудниками.</td></tr>
           <tr><td>Администратор</td><td>Полный доступ. Одобрение и отклонение заявок на верификацию.</td></tr>
         </tbody>
       </table>
