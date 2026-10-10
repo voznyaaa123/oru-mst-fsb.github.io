@@ -97,16 +97,15 @@
   .viewer-toolbar .spacer{flex:1}
   .doc{background:#f4f1e8;color:#111;padding:60px 70px;border-radius:3px;font-family:"Times New Roman",Georgia,serif;font-size:15px;line-height:1.55;max-width:900px;margin:0 auto;user-select:none;-webkit-user-select:none;box-shadow:0 10px 40px rgba(0,0,0,.4);position:relative}
   .doc .stamp{position:absolute;top:20px;left:20px;font-size:10px;color:#a00;border:2px solid #a00;padding:4px 8px;letter-spacing:1px;transform:rotate(-3deg);opacity:.75}
-  .doc .doc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;margin-bottom:12px}
-  .doc .doc-header-left{font-size:13px;line-height:1.4}
+  .doc .doc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;margin-bottom:18px}
+  .doc .doc-header-left{font-size:13px;line-height:1.4;text-align:center;max-width:340px}
   .doc .doc-header-left .org-plain{font-weight:400;text-transform:uppercase;letter-spacing:.3px}
   .doc .doc-header-left .org-bold{font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:6px}
+  .doc .doc-header-left .org-date{margin-top:10px;font-size:13px;font-weight:600}
+  .doc .doc-header-left .org-city{margin-top:2px;font-size:13px}
   .doc .addressee{text-align:right;font-size:14px;line-height:1.4;max-width:340px;flex:0 0 auto;margin:0}
   .doc .addressee .org{display:block}
   .doc .addressee .rank{display:block;font-weight:600;margin-top:2px}
-  .doc .doc-header-line{border:none;border-top:1.5px solid #333;margin:8px 0 14px}
-  .doc .doc-date-num{font-size:14px;margin-bottom:4px}
-  .doc .doc-city{font-size:14px;margin-bottom:30px}
   .doc h1{text-align:center;font-size:17px;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px}
   .doc .sub{text-align:center;font-size:13px;color:#444;margin-bottom:34px}
   .doc p{margin:0 0 10px;text-align:justify}
@@ -342,9 +341,7 @@ const __store = (function() {
 })();
 
 const CACHE = {
-  get oru_users() {
-    return __store.users.map(u => { const {password,passwordHash,...safe}=u; return safe; });
-  },
+  get oru_users() { return __store.users.map(u => { const {password,passwordHash,...safe}=u; return safe; }); },
   set oru_users(v){__store.users=v},
   get oru_docs(){return __store.docs}, set oru_docs(v){__store.docs=v},
   get oru_orm(){return __store.orm}, set oru_orm(v){__store.orm=v},
@@ -914,8 +911,8 @@ function renderDashboard(root) {
 function renderForm(root, type) {
   const isUK = type === 'UK';
   const measures = isUK
-    ? ['Выговор', 'Строгий выговор', 'Увольнение', 'Заключение под стражу']
-    : ['Выговор', 'Строгий выговор', 'Увольнение', 'Заключение под стражу'];
+    ? ['Выговор', 'Строгий выговор', 'Увольнение', 'Заключение под стражу', 'Предупреждение о неполном служебном соответствии']
+    : ['Выговор', 'Строгий выговор', 'Увольнение', 'Заключение под стражу', 'Административный штраф', 'Предупреждение о неполном служебном соответствии'];
   const hasSig = !!getSignature(currentUser.login);
 
   root.innerHTML = `
@@ -940,8 +937,20 @@ function renderForm(root, type) {
         <div class="field full"><label>Краткие обстоятельства события</label><textarea name="circumstances" rows="4" required></textarea></div>
         <div class="section-title">Правовая квалификация</div>
         <div class="field"><label>Статья ${isUK ? 'УК' : 'КоАП'} РФ</label><input name="article" required></div>
-        <div class="field"><label>Мера пресечения / взыскания</label><select name="measure" required>${measures.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}</select></div>
-        <div class="field"><label>Срок задержания</label><input name="term"></div>
+        <div class="field">
+          <label>Мера пресечения / взыскания</label>
+          <select name="measure" id="measureSelect" required>
+            ${measures.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" id="termField" style="display:none">
+          <label>Срок задержания</label>
+          <input name="term" placeholder="напр. 48 часов">
+        </div>
+        <div class="field" id="fineField" style="display:none">
+          <label>Сумма штрафа</label>
+          <input name="fine" placeholder="напр. 30 000" inputmode="numeric">
+        </div>
         <div class="field"><label>Дополнительные сведения</label><input name="extra"></div>
         <div class="form-actions full">
           <button type="button" class="btn secondary" onclick="nav('dashboard')">Отмена</button>
@@ -951,10 +960,34 @@ function renderForm(root, type) {
     </div>
   `;
 
+  const measureSelect = document.getElementById('measureSelect');
+  const termField = document.getElementById('termField');
+  const fineField = document.getElementById('fineField');
+
+  function updateVisibility() {
+    const val = measureSelect.value;
+    termField.style.display = (val === 'Заключение под стражу') ? '' : 'none';
+    if (termField.style.display === 'none') {
+      const inp = termField.querySelector('input');
+      if (inp) inp.value = '';
+    }
+    fineField.style.display = (val === 'Административный штраф') ? '' : 'none';
+    if (fineField.style.display === 'none') {
+      const inp = fineField.querySelector('input');
+      if (inp) inp.value = '';
+    }
+  }
+  measureSelect.addEventListener('change', updateVisibility);
+  updateVisibility();
+
   document.getElementById('docForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const fields = Object.fromEntries(fd.entries());
+    const val = fields.measure;
+    if (val !== 'Заключение под стражу') fields.term = '';
+    if (val !== 'Административный штраф') fields.fine = '';
+
     const allDocs = __store.docs;
     const docNumber = String(allDocs.length + 1).padStart(3, '0');
     const doc = {
@@ -976,7 +1009,7 @@ function renderForm(root, type) {
 }
 
 /* ============================================================
-   Просмотр УК / КоАП
+   Просмотр УК / КоАП — новая выровненная шапка
    ============================================================ */
 function renderDoc(root, docId) {
   const doc = __store.docs.find(d => d.id === docId);
@@ -987,6 +1020,12 @@ function renderDoc(root, docId) {
   const chief = getChiefData();
   const docNumber = doc.number || '000';
   const deletable = canDelete(doc);
+
+  let measureText = `Применить меру ${isUK ? 'пресечения' : 'дисциплинарного взыскания'} в виде: <span class="fill">${esc(f.measure)}</span>`;
+  if (f.measure === 'Заключение под стражу' && f.term) measureText += `, срок: <span class="fill">${esc(f.term)}</span>`;
+  if (f.measure === 'Административный штраф' && f.fine) measureText += ` в размере <span class="fill">${esc(f.fine)}</span>`;
+  measureText += '.';
+  if (f.extra) measureText += `<br>Дополнительно: ${esc(f.extra)}`;
 
   root.innerHTML = `
     <div class="viewer-toolbar">
@@ -1002,6 +1041,8 @@ function renderDoc(root, docId) {
         <div class="doc-header-left">
           <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
           <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
+          <div class="org-date">${dateFullRu()} / № ${esc(docNumber)} 283048</div>
+          <div class="org-city">г. Мариуполь</div>
         </div>
         <div class="addressee">
           <span class="org">${esc(chief.position)}</span>
@@ -1009,9 +1050,7 @@ function renderDoc(root, docId) {
           <span class="rank">${esc(chief.rank)} ${esc(chief.name)}</span>
         </div>
       </div>
-      <hr class="doc-header-line">
-      <div class="doc-date-num">${dateFullRu()} / № ${esc(docNumber)} 283048</div>
-      <div class="doc-city">г. Мариуполь</div>
+
       <h1>ПОСТАНОВЛЕНИЕ</h1>
       <div class="sub">${isUK ? 'о применении меры пресечения по уголовному делу (УК РФ)' : 'по делу об административном правонарушении (КоАП РФ)'}</div>
       <p>Я, <span class="fill">${esc(f.rank_investigator)}</span> <span class="fill">${esc(f.fio_investigator)}</span>, ${esc(f.position_investigator || '')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')}, рассмотрев материалы ${isUK ? 'уголовного дела' : 'дела об административном правонарушении'},</p>
@@ -1020,7 +1059,7 @@ function renderDoc(root, docId) {
       <p>Военнослужащий <span class="fill">${esc(f.fio_detained)}</span>, ${f.rank_detained ? `звание: <span class="fill">${esc(f.rank_detained)}</span>,` : ''} должность: <span class="fill">${esc(f.position_detained)}</span>, подразделение: <span class="fill">${esc(f.unit_detained)}</span>, совершил деяние, предусмотренное <span class="fill">${esc(f.article)}</span>.</p>
       <p>На основании изложенного и руководствуясь ${isUK ? 'ст. 91, 92, 108 УПК РФ' : 'ст. 29.9, 29.10 КоАП РФ'},</p>
       <p><b>ПОСТАНОВИЛ:</b></p>
-      <p>Применить меру ${isUK ? 'пресечения' : 'дисциплинарного взыскания'} в виде: <span class="fill">${esc(f.measure)}</span>${f.term ? `, срок: <span class="fill">${esc(f.term)}</span>` : ''}. ${f.extra ? `<br>Дополнительно: ${esc(f.extra)}` : ''}</p>
+      <p>${measureText}</p>
       <div class="sig">
         <div>${esc(f.position_investigator || 'Сотрудник')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')}
           <div class="sig-block" style="margin-top:10px">
@@ -1039,7 +1078,6 @@ function renderDoc(root, docId) {
    ============================================================ */
 function renderOrmForm(root) {
   const hasSig = !!getSignature(currentUser.login);
-
   root.innerHTML = `
     <div class="panel" style="padding:22px">
       <div class="panel-head" style="margin:-22px -22px 22px;border-bottom:1px solid var(--border)">
@@ -1126,7 +1164,7 @@ function renderOrmForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР ОРМ (исправленные подписи)
+   ПРОСМОТР ОРМ — новая выровненная шапка
    ============================================================ */
 function renderOrmDoc(root, docId) {
   const doc = __store.orm.find(d => d.id === docId);
@@ -1155,6 +1193,8 @@ function renderOrmDoc(root, docId) {
         <div class="doc-header-left">
           <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
           <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
+          <div class="org-date">${dateFullRu()} / № ${esc(docNumber)} 283048</div>
+          <div class="org-city">г. Мариуполь</div>
         </div>
         <div class="addressee">
           <span class="org">${esc(chief.position)}</span>
@@ -1162,8 +1202,6 @@ function renderOrmDoc(root, docId) {
           <span class="rank">${esc(chief.rank)} ${esc(chief.name)}</span>
         </div>
       </div>
-
-      <hr class="doc-header-line">
 
       <h1 style="text-align:center;font-size:17px;text-transform:uppercase;letter-spacing:2px;margin:20px 0 10px">
         РАСПОРЯЖЕНИЕ № ${esc(docNumber)}
@@ -1173,7 +1211,6 @@ function renderOrmDoc(root, docId) {
         обследование помещений, зданий, сооружений, участков местности и транспортных средств
       </div>
 
-      <!-- Место составления: значение СВЕРХУ, подпись СНИЗУ -->
       <div style="text-align:center;margin-top:4px;margin-bottom:2px;font-weight:600">${esc(f.place || 'г. Мариуполь')}</div>
       <div style="border-top:1px solid #333;margin:0 auto 4px;max-width:600px"></div>
       <div style="text-align:center;font-size:11px;color:#444;margin-bottom:22px">(место составления)</div>
@@ -1183,7 +1220,7 @@ function renderOrmDoc(root, docId) {
         <span class="orm-line">${esc(f.rank_chief || '')}</span>
         <span class="orm-line">${esc(f.fio_chief || '')}</span>,
       </p>
-      <div class="orm-small">(должность, специальное звание, Ф.И.О.)</div>
+      <div class="orm-small">(должность, специальное звание, Ф.И.О. руководителя)</div>
 
       <p style="text-align:left;margin-top:14px">
         рассмотрев <span class="orm-line">${esc(f.basis || '')}</span>
