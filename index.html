@@ -184,6 +184,7 @@
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; letter-spacing: .3px; }
   .badge.uk { background: #3a2c1a; color: #e2b954; }
   .badge.koap { background: #1a2c3a; color: #6db1e8; }
+  .badge.orm { background: #2a1a3a; color: #c78fe0; }
   .badge.blocked { background: #3a1a1a; color: #ff8080; }
   .badge.active-user { background: #1a3a24; color: #7ee0a4; }
   .badge.role-admin { background: #3a1a3a; color: #e28fe0; }
@@ -264,6 +265,86 @@
   .doc .sig-slot.empty::after { content: ""; display: block; height: 36px; }
   .doc .sig-name { font-weight: 600; }
 
+  /* ============== ОРМ: кликабельные переключатели в форме ============== */
+  .radio-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 4px; }
+  .radio-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: #0d1620; border: 1px solid var(--border);
+    border-radius: 4px; cursor: pointer; font-size: 13px;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+  }
+  .radio-item:hover { border-color: var(--accent); }
+  .radio-item input { display: none; }
+  .radio-item .dot {
+    width: 16px; height: 16px; border: 2px solid var(--border);
+    border-radius: 50%; position: relative;
+    transition: border-color .15s;
+  }
+  .radio-item input:checked + .dot { border-color: var(--accent); }
+  .radio-item input:checked + .dot::after {
+    content: ""; position: absolute; inset: 3px;
+    background: var(--accent); border-radius: 50%;
+  }
+  .radio-item.selected { border-color: var(--accent); background: #1a2533; }
+
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); gap: 8px;
+    margin-top: 4px;
+  }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 12px; background: #0d1620;
+    border: 1px solid var(--border); border-radius: 4px;
+    cursor: pointer; font-size: 12px; line-height: 1.35;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+  }
+  .check-item:hover { border-color: var(--accent); }
+  .check-item input { display: none; }
+  .check-item .box {
+    flex: 0 0 16px; width: 16px; height: 16px;
+    border: 2px solid var(--border); border-radius: 3px;
+    position: relative; transition: border-color .15s;
+    margin-top: 1px;
+  }
+  .check-item input:checked + .box { border-color: var(--accent); background: var(--accent); }
+  .check-item input:checked + .box::after {
+    content: "✓"; position: absolute; inset: -3px 0 0 0;
+    color: #1a1a1a; font-size: 12px; font-weight: 700;
+    text-align: center; line-height: 14px;
+  }
+  .check-item.selected { border-color: var(--accent); background: #1a2533; }
+
+  /* Бланк: подчёркивания в стиле реального документа */
+  .doc .orm-line {
+    display: inline-block;
+    border-bottom: 1px solid #333;
+    min-width: 200px;
+    padding: 0 6px;
+    font-weight: 400;
+  }
+  .doc .orm-center { text-align: center; }
+  .doc .orm-underline {
+    display: block;
+    border-bottom: 1px solid #333;
+    margin: 8px 0 2px;
+    min-height: 18px;
+    padding: 0 4px;
+  }
+  .doc .orm-small { font-size: 11px; color: #444; display: block; text-align: center; margin-top: 2px; }
+  .doc .orm-block { margin: 14px 0; }
+  .doc .orm-list-item { display: flex; gap: 10px; margin: 8px 0; }
+  .doc .orm-list-item .num { flex: 0 0 auto; font-weight: 600; }
+  .doc .orm-list-item .body { flex: 1; }
+  .doc .footnote {
+    border-top: 1px solid #999;
+    margin-top: 40px; padding-top: 8px;
+    font-size: 10px; color: #444; text-align: left;
+  }
+
   .toast {
     position: fixed; bottom: 24px; right: 24px;
     background: var(--ok); color: #fff;
@@ -319,19 +400,11 @@
   .modal .meta b { color: var(--accent-2); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
 
-  .verify-info {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    margin-bottom: 14px; font-size: 13px;
-  }
+  .verify-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; font-size: 13px; }
   .verify-info .kv { background: #0d1620; padding: 8px 12px; border-radius: 3px; border: 1px solid var(--border); }
   .verify-info .kv .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
   .verify-info .kv .v { color: var(--text); margin-top: 2px; word-break: break-all; }
-
-  .verify-shot {
-    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
-    background: #0d1620; text-align: center;
-    max-height: 60vh; overflow-y: auto;
-  }
+  .verify-shot { border: 1px solid var(--border); border-radius: 4px; overflow: hidden; background: #0d1620; text-align: center; max-height: 60vh; overflow-y: auto; }
   .verify-shot img { max-width: 100%; display: block; }
 
   code.login-code {
@@ -388,20 +461,15 @@
   <div class="text">Подключение к базе данных ОРУ…</div>
 </div>
 
-<!-- Экран ожидания верификации -->
 <div class="login-wrap" id="pendingScreen" style="display:none">
   <div class="pending-box">
     <div class="pend-icon">⏳</div>
     <h2 id="pendingTitle">Ожидайте ответа</h2>
-    <p id="pendingText">
-      Мы направили ваши данные в отдел ОРУ.<br>
-      Пожалуйста, ожидайте решения администрации. Ничего не меняйте и не редактируйте.
-    </p>
+    <p id="pendingText">Мы направили ваши данные в отдел ОРУ.<br>Пожалуйста, ожидайте решения администрации. Ничего не меняйте и не редактируйте.</p>
     <button class="btn secondary" onclick="logout()">Выйти</button>
   </div>
 </div>
 
-<!-- Экран входа / регистрации -->
 <div class="login-wrap" id="loginScreen" style="display:none">
   <div class="login-card">
     <h1>ОРУ УФСБ России по ДНР</h1>
@@ -413,91 +481,44 @@
     </div>
 
     <form id="loginForm" class="auth-form active" autocomplete="off">
-      <div class="field">
-        <label>Логин</label>
-        <input type="text" name="login" id="loginUser" autocomplete="off" required>
-      </div>
-      <div class="field">
-        <label>Пароль</label>
-        <input type="password" name="password" id="loginPass" required>
-      </div>
+      <div class="field"><label>Логин</label><input type="text" id="loginUser" required></div>
+      <div class="field"><label>Пароль</label><input type="password" id="loginPass" required></div>
       <button type="submit" class="btn btn-block">Войти в систему</button>
       <div class="error" id="loginError"></div>
-      <div class="hint">
-        Доступ выдаётся администрацией ОРУ. Самостоятельная регистрация возможна
-        только с ролью <b>«Сотрудник»</b>.
-      </div>
+      <div class="hint">Доступ выдаётся администрацией ОРУ. Самостоятельная регистрация возможна только с ролью <b>«Сотрудник»</b>.</div>
     </form>
 
     <form id="registerForm" class="auth-form" autocomplete="off">
-      <div class="field">
-        <label>ФИО</label>
-        <input type="text" name="name" placeholder="Иванов Иван Иванович" required>
-      </div>
-      <div class="field">
-        <label>Звание</label>
-        <input type="text" name="rank" placeholder="майор" required>
-      </div>
-      <div class="field">
-        <label>Должность</label>
-        <input type="text" name="position" placeholder="должность" required>
-      </div>
-      <div class="field">
-        <label>Подразделение</label>
-        <input type="text" name="subdivision" placeholder="ОРУ УФСБ России по ДНР" required>
-      </div>
-      <div class="field">
-        <label>SteamID</label>
-        <input type="text" name="steamid" placeholder="STEAM_0:1:12345678 или 7656119..." required>
-      </div>
-      <div class="field">
-        <label>Логин (латиница/цифры, без пробелов)</label>
-        <input type="text" name="login" pattern="[A-Za-z0-9_.-]{3,32}" title="3–32 символа: латиница, цифры, _, ., -" required>
-      </div>
+      <div class="field"><label>ФИО</label><input type="text" name="name" required></div>
+      <div class="field"><label>Звание</label><input type="text" name="rank" required></div>
+      <div class="field"><label>Должность</label><input type="text" name="position" required></div>
+      <div class="field"><label>Подразделение</label><input type="text" name="subdivision" required></div>
+      <div class="field"><label>SteamID</label><input type="text" name="steamid" required></div>
+      <div class="field"><label>Логин</label><input type="text" name="login" pattern="[A-Za-z0-9_.-]{3,32}" required></div>
       <div class="field-row">
-        <div class="field">
-          <label>Пароль</label>
-          <input type="password" name="password" minlength="4" required>
-        </div>
-        <div class="field">
-          <label>Повтор пароля</label>
-          <input type="password" name="password2" minlength="4" required>
-        </div>
+        <div class="field"><label>Пароль</label><input type="password" name="password" minlength="4" required></div>
+        <div class="field"><label>Повтор пароля</label><input type="password" name="password2" minlength="4" required></div>
       </div>
-
       <div class="field">
         <label>Скриншот таба (F12)</label>
         <div class="file-drop" id="steamFileDrop">
           <input type="file" id="steamFile" accept="image/png,image/jpeg,image/webp">
           <span class="icon">📎</span>
           <div id="steamFileText">Нажмите, чтобы загрузить скриншот</div>
-          <div style="font-size:11px; margin-top:4px; color:var(--muted)">
-            Прикрепите скриншот таба (F12) со своим персонажем. PNG/JPG, до 3 МБ.
-          </div>
         </div>
       </div>
-
       <button type="submit" class="btn btn-block">Зарегистрироваться и отправить на проверку</button>
       <div class="error" id="registerError"></div>
-      <div class="hint">
-        После регистрации заявка уходит на проверку администрации.<br>
-        <b>Внимание:</b> самостоятельная регистрация создаёт только аккаунт
-        с ролью «Сотрудник». Роли «Начальник ОРУ» и «Администратор» присваиваются
-        исключительно администрацией и недоступны для самостоятельного создания.
-      </div>
+      <div class="hint">После регистрации заявка уходит на проверку администрации.</div>
     </form>
   </div>
 </div>
 
-<!-- Приложение -->
 <div class="app" id="app">
   <header class="topbar">
     <div class="brand">
       <div class="emblem">ОРУ</div>
-      <div class="title">
-        Оперативно-розыскное управление
-        <small>УФСБ России по ДНР · Внутренний документооборот</small>
-      </div>
+      <div class="title">Оперативно-розыскное управление<small>УФСБ России по ДНР · Внутренний документооборот</small></div>
     </div>
     <div class="user">
       <div>
@@ -514,6 +535,7 @@
       <a data-page="dashboard" class="active">📋 Реестр документов</a>
       <a data-page="new-uk">📝 Постановление по УК РФ</a>
       <a data-page="new-koap">📝 Постановление по КоАП РФ</a>
+      <a data-page="new-orm">📄 Распоряжение об ОРМ</a>
       <div class="section">Личный раздел</div>
       <a data-page="profile">🖋️ Мой профиль и подпись</a>
       <div class="section" id="navAdminSection" style="display:none">Администрирование</div>
@@ -528,7 +550,6 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Модалка удаления документа -->
 <div class="modal-back" id="deleteModal">
   <div class="modal">
     <h3>Удалить документ?</h3>
@@ -541,7 +562,6 @@
   </div>
 </div>
 
-<!-- Модалка верификации -->
 <div class="modal-back" id="verifyModal">
   <div class="modal verify">
     <h3>Верификация пользователя</h3>
@@ -561,8 +581,26 @@
    ============================================================ */
 const FIREBASE_DB_URL = 'https://mst-oru-fsb-default-rtdb.europe-west1.firebasedatabase.app';
 
+/* Список ОРМ по ст. 6 ФЗ-144 «Об оперативно-розыскной деятельности» */
+const ORM_LIST = [
+  { id: 'opros',           label: 'Опрос' },
+  { id: 'spravki',         label: 'Наведение справок' },
+  { id: 'obrazcy',         label: 'Сбор образцов для сравнительного исследования' },
+  { id: 'issled',          label: 'Исследование предметов и документов' },
+  { id: 'nabludenie',      label: 'Наблюдение' },
+  { id: 'otozhdestvlenie', label: 'Отождествление личности' },
+  { id: 'obsledovanie',    label: 'Обследование помещений, зданий, сооружений, участков местности и транспортных средств' },
+  { id: 'kontrol_pocht',   label: 'Контроль почтовых отправлений, телеграфных и иных сообщений' },
+  { id: 'proslushivanie',  label: 'Прослушивание телефонных переговоров' },
+  { id: 'snyatie_info',    label: 'Снятие информации с технических каналов связи' },
+  { id: 'oper_experiment', label: 'Оперативный эксперимент' },
+  { id: 'oper_vnedrenie',  label: 'Оперативное внедрение' },
+  { id: 'kontrol_postavka',label: 'Контролируемая поставка' },
+  { id: 'oper_osmotr',     label: 'Оперативный осмотр' },
+];
+
 /* ============================================================
-   ХЕШИРОВАНИЕ (SHA-256)
+   ХЕШИРОВАНИЕ
    ============================================================ */
 async function sha256(str) {
   const buf = new TextEncoder().encode(str);
@@ -571,19 +609,17 @@ async function sha256(str) {
 }
 
 /* ============================================================
-   Хранилище (в памяти)
+   Хранилище
    ============================================================ */
 const __store = (function() {
-  const data = { oru_users: [], oru_docs: [], oru_signatures: {} };
+  const data = { oru_users: [], oru_docs: [], oru_signatures: {}, oru_orm: [] };
   return {
     read(k) { return data[k]; },
     write(k, v) { data[k] = v; },
-    get users() { return data.oru_users; },
-    set users(v) { data.oru_users = v; },
-    get docs() { return data.oru_docs; },
-    set docs(v) { data.oru_docs = v; },
-    get signatures() { return data.oru_signatures; },
-    set signatures(v) { data.oru_signatures = v; }
+    get users() { return data.oru_users; },   set users(v) { data.oru_users = v; },
+    get docs()  { return data.oru_docs; },    set docs(v)  { data.oru_docs = v; },
+    get orm()   { return data.oru_orm; },     set orm(v)   { data.oru_orm = v; },
+    get signatures() { return data.oru_signatures; }, set signatures(v) { data.oru_signatures = v; }
   };
 })();
 
@@ -597,6 +633,8 @@ const CACHE = {
   set oru_users(v) { __store.users = v; },
   get oru_docs() { return __store.docs; },
   set oru_docs(v) { __store.docs = v; },
+  get oru_orm()  { return __store.orm; },
+  set oru_orm(v) { __store.orm = v; },
   get oru_signatures() { return __store.signatures; },
   set oru_signatures(v) { __store.signatures = v; }
 };
@@ -653,25 +691,18 @@ async function fbDelete(path) {
 }
 
 /* ============================================================
-   Синхронизация с Firebase
+   Синхронизация
    ============================================================ */
 async function syncToFirebase(key, value) {
   if (key === 'oru_users') {
     const tree = {};
     value.forEach(u => {
       tree[u.login] = {
-        login: u.login,
-        passwordHash: u.passwordHash || '',
-        name: u.name,
-        rank: u.rank || '',
-        position: u.position || '',
-        subdivision: u.subdivision || '',
-        steamid: u.steamid || '',
-        screenshot: u.screenshot || '',
-        status: u.status || 'approved',
-        role: u.role,
-        blocked: !!u.blocked,
-        isSystem: !!u.isSystem,
+        login: u.login, passwordHash: u.passwordHash || '',
+        name: u.name, rank: u.rank || '', position: u.position || '',
+        subdivision: u.subdivision || '', steamid: u.steamid || '',
+        screenshot: u.screenshot || '', status: u.status || 'approved',
+        role: u.role, blocked: !!u.blocked, isSystem: !!u.isSystem,
         createdAt: u.createdAt || new Date().toISOString(),
       };
     });
@@ -686,6 +717,16 @@ async function syncToFirebase(key, value) {
       };
     });
     await fbPut('docs', tree);
+  } else if (key === 'oru_orm') {
+    const tree = {};
+    value.forEach(d => {
+      tree[d.id] = {
+        id: d.id, type: d.type, number: d.number,
+        authorLogin: d.authorLogin, authorName: d.authorName, authorRank: d.authorRank,
+        fields: d.fields, createdAt: d.createdAt
+      };
+    });
+    await fbPut('orm', tree);
   } else if (key === 'oru_signatures') {
     const tree = {};
     Object.entries(value).forEach(([login, data]) => { tree[login] = data; });
@@ -694,28 +735,25 @@ async function syncToFirebase(key, value) {
 }
 
 /* ============================================================
-   Загрузка данных
+   Загрузка
    ============================================================ */
 async function loadAllFromFirebase() {
-  const [usersTree, docsTree, sigsTree] = await Promise.all([
-    fbGet('users'), fbGet('docs'), fbGet('signatures')
+  const [usersTree, docsTree, sigsTree, ormTree] = await Promise.all([
+    fbGet('users'), fbGet('docs'), fbGet('signatures'), fbGet('orm')
   ]);
   __store.users = usersTree ? Object.values(usersTree).map(u => ({
-    login: u.login,
-    passwordHash: u.passwordHash || '',
-    name: u.name,
-    rank: u.rank || '',
-    position: u.position || '',
-    subdivision: u.subdivision || '',
-    steamid: u.steamid || '',
-    screenshot: u.screenshot || '',
-    status: u.status || 'approved',
-    role: u.role,
-    blocked: !!u.blocked,
-    isSystem: !!u.isSystem,
-    createdAt: u.createdAt,
+    login: u.login, passwordHash: u.passwordHash || '',
+    name: u.name, rank: u.rank || '', position: u.position || '',
+    subdivision: u.subdivision || '', steamid: u.steamid || '',
+    screenshot: u.screenshot || '', status: u.status || 'approved',
+    role: u.role, blocked: !!u.blocked, isSystem: !!u.isSystem, createdAt: u.createdAt,
   })) : [];
   __store.docs = docsTree ? Object.values(docsTree).map(d => ({
+    id: d.id, type: d.type, number: d.number,
+    authorLogin: d.authorLogin, authorName: d.authorName, authorRank: d.authorRank,
+    fields: d.fields, createdAt: d.createdAt
+  })) : [];
+  __store.orm = ormTree ? Object.values(ormTree).map(d => ({
     id: d.id, type: d.type, number: d.number,
     authorLogin: d.authorLogin, authorName: d.authorName, authorRank: d.authorRank,
     fields: d.fields, createdAt: d.createdAt
@@ -764,7 +802,6 @@ const CHIEF_ADDRESSEE = {
 function getChiefData() { return CHIEF_ADDRESSEE; }
 
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-
 function dateFullRu() {
   const d = new Date();
   const p = n => String(n).padStart(2, '0');
@@ -792,7 +829,8 @@ function todayStr() {
   return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`;
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-  /* ============================================================
+
+/* ============================================================
    Права доступа
    ============================================================ */
 function canAccessUsersSection() { return currentUser.role === 'admin' || currentUser.role === 'chief'; }
@@ -813,15 +851,13 @@ function canChangeRole(t) {
   if (t.role === 'admin') return false;
   return true;
 }
-/* Одобрять и отклонять заявки может только АДМИНИСТРАТОР */
 function canVerifyUser(t) {
   if (!currentUser || !t) return false;
   if (currentUser.role !== 'admin') return false;
   if (t.isSystem) return false;
   return t.status === 'pending';
 }
-
-/* ============================================================
+  /* ============================================================
    Аутентификация
    ============================================================ */
 let currentUser = DB.get('oru_session', null);
@@ -839,7 +875,6 @@ document.querySelectorAll('.auth-tab').forEach(tab => {
   });
 });
 
-/* Показ экрана ожидания / отклонения */
 function showPendingScreen(message) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').classList.remove('active');
@@ -857,7 +892,7 @@ function showPendingScreen(message) {
 }
 
 /* ============================================================
-   Обработчик формы РЕГИСТРАЦИИ
+   РЕГИСТРАЦИЯ
    ============================================================ */
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -889,7 +924,6 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
   const passwordHash = await sha256(password);
 
-  // сжатие картинки
   const screenshotDataUrl = await new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = ev => {
@@ -911,35 +945,23 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   });
 
   const user = {
-    login,
-    passwordHash,
+    login, passwordHash,
     name: String(fd.get('name') || '').trim(),
     rank: String(fd.get('rank') || '').trim(),
     position: String(fd.get('position') || '').trim(),
     subdivision: String(fd.get('subdivision') || '').trim(),
-    steamid,
-    screenshot: screenshotDataUrl,
-    status: 'pending',
-    role: 'employee',
-    blocked: false,
+    steamid, screenshot: screenshotDataUrl,
+    status: 'pending', role: 'employee', blocked: false,
     createdAt: new Date().toISOString(),
   };
 
   try {
     await fbPut(`users/${login}`, {
-      login: user.login,
-      passwordHash: user.passwordHash,
-      name: user.name,
-      rank: user.rank,
-      position: user.position,
-      subdivision: user.subdivision,
-      steamid: user.steamid,
-      screenshot: user.screenshot,
-      status: 'pending',
-      role: user.role,
-      blocked: false,
-      isSystem: false,
-      createdAt: user.createdAt,
+      login: user.login, passwordHash: user.passwordHash,
+      name: user.name, rank: user.rank, position: user.position,
+      subdivision: user.subdivision, steamid: user.steamid,
+      screenshot: user.screenshot, status: 'pending',
+      role: user.role, blocked: false, isSystem: false, createdAt: user.createdAt,
     });
   } catch (ex) {
     console.error(ex);
@@ -957,7 +979,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 });
 
 /* ============================================================
-   Обработчик формы ВХОДА
+   ВХОД
    ============================================================ */
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -992,9 +1014,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   startApp();
 });
 
-/* ============================================================
-   Выход
-   ============================================================ */
 function logout() {
   currentUser = null;
   localStorage.removeItem('oru_session');
@@ -1093,21 +1112,14 @@ function closeVerifyModal() {
 
 async function approveVerify() {
   if (!verifyTargetLogin) return;
-  if (!currentUser || currentUser.role !== 'admin') {
-    toast('Только администратор может одобрять', true); return;
-  }
+  if (!currentUser || currentUser.role !== 'admin') { toast('Только администратор может одобрять', true); return; }
   const u = __store.users.find(x => x.login === verifyTargetLogin);
   if (!u) return;
-
   if (!confirm(`Одобрить верификацию пользователя «${u.name}» (${u.login})?`)) return;
 
   try {
     await fbPatch(`users/${u.login}`, { status: 'approved' });
-  } catch (e) {
-    console.error(e);
-    toast('Ошибка сохранения', true);
-    return;
-  }
+  } catch (e) { console.error(e); toast('Ошибка сохранения', true); return; }
   u.status = 'approved';
   toast('Пользователь одобрен');
   closeVerifyModal();
@@ -1116,21 +1128,14 @@ async function approveVerify() {
 
 async function rejectVerify() {
   if (!verifyTargetLogin) return;
-  if (!currentUser || currentUser.role !== 'admin') {
-    toast('Только администратор может отклонять', true); return;
-  }
+  if (!currentUser || currentUser.role !== 'admin') { toast('Только администратор может отклонять', true); return; }
   const u = __store.users.find(x => x.login === verifyTargetLogin);
   if (!u) return;
-
   if (!confirm(`Отклонить верификацию пользователя «${u.name}» (${u.login})?\nПользователь не сможет войти в систему.`)) return;
 
   try {
     await fbPatch(`users/${u.login}`, { status: 'rejected' });
-  } catch (e) {
-    console.error(e);
-    toast('Ошибка сохранения', true);
-    return;
-  }
+  } catch (e) { console.error(e); toast('Ошибка сохранения', true); return; }
   u.status = 'rejected';
   toast('Заявка отклонена');
   closeVerifyModal();
@@ -1176,19 +1181,21 @@ function nav(page) {
   if (page === 'dashboard')      renderDashboard(c);
   else if (page === 'new-uk')    renderForm(c, 'UK');
   else if (page === 'new-koap')  renderForm(c, 'KOAP');
+  else if (page === 'new-orm')   renderOrmForm(c);
   else if (page === 'profile')   renderProfile(c);
   else if (page === 'about')     renderAbout(c);
   else if (page === 'users')     renderUsers(c);
-  else if (page.startsWith('view-')) renderDoc(c, page.substring(5));
+  else if (page.startsWith('view-'))   renderDoc(c, page.substring(5));
+  else if (page.startsWith('orm-'))    renderOrmDoc(c, page.substring(4));
 }
 
 /* ============================================================
    Видимость документов
    ============================================================ */
 function visibleDocs() {
-  const docs = __store.docs;
-  if (currentUser.role === 'employee') return docs.filter(d => d.authorLogin === currentUser.login);
-  return docs;
+  const all = [...__store.docs, ...__store.orm];
+  if (currentUser.role === 'employee') return all.filter(d => d.authorLogin === currentUser.login);
+  return all;
 }
 function canView(doc) {
   if (currentUser.role === 'admin' || currentUser.role === 'chief') return true;
@@ -1203,41 +1210,67 @@ function canDelete(doc) {
    Удаление документа
    ============================================================ */
 let pendingDeleteId = null;
+let pendingDeleteKind = null;  // 'doc' | 'orm'
 
-function askDelete(docId) {
-  const doc = __store.docs.find(d => d.id === docId);
+function askDelete(id) {
+  // ищем и в docs, и в orm
+  let doc = __store.docs.find(d => d.id === id);
+  let kind = 'doc';
+  if (!doc) {
+    doc = __store.orm.find(d => d.id === id);
+    kind = 'orm';
+  }
   if (!doc) return;
   if (!canDelete(doc)) { toast('Недостаточно прав для удаления', true); return; }
 
-  pendingDeleteId = docId;
-  document.getElementById('deleteModalMeta').innerHTML = `
-    Тип: <b>${doc.type === 'UK' ? 'УК РФ' : 'КоАП РФ'}</b><br>
-    Задержанный: <b>${esc(doc.fields.fio_detained)}</b><br>
-    Статья: <b>${esc(doc.fields.article)}</b>
-  `;
+  pendingDeleteId = id;
+  pendingDeleteKind = kind;
+
+  let meta = '';
+  if (kind === 'orm') {
+    meta = `
+      Тип: <b>ОРМ · Распоряжение</b><br>
+      Вид: <b>${esc(doc.fields.ormKindLabel || '—')}</b><br>
+      В отношении: <b>${esc(doc.fields.targetLine || '—')}</b>
+    `;
+  } else {
+    meta = `
+      Тип: <b>${doc.type === 'UK' ? 'УК РФ' : 'КоАП РФ'}</b><br>
+      Задержанный: <b>${esc(doc.fields.fio_detained)}</b><br>
+      Статья: <b>${esc(doc.fields.article)}</b>
+    `;
+  }
+  document.getElementById('deleteModalMeta').innerHTML = meta;
   document.getElementById('deleteModal').classList.add('active');
 }
+
 function closeDeleteModal() {
   pendingDeleteId = null;
+  pendingDeleteKind = null;
   document.getElementById('deleteModal').classList.remove('active');
 }
+
 function confirmDelete() {
   if (!pendingDeleteId) return;
-  const docs = __store.docs;
-  const idx = docs.findIndex(d => d.id === pendingDeleteId);
+  const kind = pendingDeleteKind;
+  const id = pendingDeleteId;
+  const arr = kind === 'orm' ? __store.orm : __store.docs;
+
+  const idx = arr.findIndex(d => d.id === id);
   if (idx === -1) { closeDeleteModal(); return; }
 
-  const removedId = pendingDeleteId;
-  docs.splice(idx, 1);
-  fbDelete(`docs/${removedId}`).catch(e => console.error(e));
+  arr.splice(idx, 1);
+  fbDelete(`${kind === 'orm' ? 'orm' : 'docs'}/${id}`).catch(e => console.error(e));
 
-  const wasOnViewPage = document.querySelector('nav.side a.active')?.dataset.page?.startsWith('view-');
+  const wasOnViewPage = document.querySelector('nav.side a.active')?.dataset.page?.startsWith('view-') ||
+                        document.querySelector('nav.side a.active')?.dataset.page?.startsWith('orm-');
   closeDeleteModal();
   toast('Документ удалён из реестра');
 
   if (wasOnViewPage) nav('dashboard');
   else renderDashboard(document.getElementById('content'));
 }
+
 document.getElementById('deleteModal').addEventListener('click', (e) => {
   if (e.target.id === 'deleteModal') closeDeleteModal();
 });
@@ -1247,8 +1280,9 @@ document.getElementById('deleteModal').addEventListener('click', (e) => {
    ============================================================ */
 function renderDashboard(root) {
   const docs = visibleDocs().slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const ukCount = docs.filter(d => d.type === 'UK').length;
+  const ukCount   = docs.filter(d => d.type === 'UK').length;
   const koapCount = docs.filter(d => d.type === 'KOAP').length;
+  const ormCount  = docs.filter(d => d.type === 'ORM').length;
   const hasSig = !!getSignature(currentUser.login);
 
   root.innerHTML = `
@@ -1275,37 +1309,58 @@ function renderDashboard(root) {
 
     <div class="panel">
       <div class="panel-head">
-        <h3>Реестр постановлений</h3>
+        <h3>Реестр документов</h3>
         <div style="display:flex;gap:8px">
           <button class="btn secondary" onclick="nav('new-uk')">+ УК РФ</button>
-          <button class="btn" onclick="nav('new-koap')">+ КоАП РФ</button>
+          <button class="btn secondary" onclick="nav('new-koap')">+ КоАП РФ</button>
+          <button class="btn" onclick="nav('new-orm')">+ ОРМ</button>
         </div>
       </div>
       ${docs.length === 0 ? `<div class="empty">Документы отсутствуют</div>` : `
       <table>
         <thead>
           <tr>
-            <th>№</th><th>Тип</th><th>Задержанный</th><th>Статья</th>
+            <th>№</th><th>Тип</th><th>Субъект</th><th>Основание</th>
             <th>Составитель</th><th>Дата</th><th>Действия</th>
           </tr>
         </thead>
         <tbody>
-          ${docs.map((d, i) => `
-            <tr>
-              <td>${esc(d.number || String(docs.length - i).padStart(3, '0'))}</td>
-              <td><span class="badge ${d.type === 'UK' ? 'uk' : 'koap'}">${d.type === 'UK' ? 'УК РФ' : 'КоАП РФ'}</span></td>
-              <td>${esc(d.fields.fio_detained)}</td>
-              <td>${esc(d.fields.article)}</td>
-              <td>${esc(d.authorRank)} ${esc(d.authorName)}</td>
-              <td>${fmtDate(d.createdAt)}</td>
-              <td>
-                <div class="row-actions">
-                  <a class="link" onclick="nav('view-${d.id}')">Открыть →</a>
-                  ${canDelete(d) ? `<button class="del-btn" title="Удалить" onclick="askDelete('${d.id}')">🗑</button>` : ''}
-                </div>
-              </td>
-            </tr>
-          `).join('')}
+          ${docs.map((d, i) => {
+            if (d.type === 'ORM') {
+              return `
+                <tr>
+                  <td>${esc(d.number || '—')}</td>
+                  <td><span class="badge orm">ОРМ</span></td>
+                  <td>${esc(d.fields.targetLine || '—')}</td>
+                  <td>${esc((d.fields.ormKindLabel || '').slice(0, 60))}</td>
+                  <td>${esc(d.authorRank)} ${esc(d.authorName)}</td>
+                  <td>${fmtDate(d.createdAt)}</td>
+                  <td>
+                    <div class="row-actions">
+                      <a class="link" onclick="nav('orm-${d.id}')">Открыть →</a>
+                      ${canDelete(d) ? `<button class="del-btn" title="Удалить" onclick="askDelete('${d.id}')">🗑</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }
+            return `
+              <tr>
+                <td>${esc(d.number || String(docs.length - i).padStart(3, '0'))}</td>
+                <td><span class="badge ${d.type === 'UK' ? 'uk' : 'koap'}">${d.type === 'UK' ? 'УК РФ' : 'КоАП РФ'}</span></td>
+                <td>${esc(d.fields.fio_detained)}</td>
+                <td>${esc(d.fields.article)}</td>
+                <td>${esc(d.authorRank)} ${esc(d.authorName)}</td>
+                <td>${fmtDate(d.createdAt)}</td>
+                <td>
+                  <div class="row-actions">
+                    <a class="link" onclick="nav('view-${d.id}')">Открыть →</a>
+                    ${canDelete(d) ? `<button class="del-btn" title="Удалить" onclick="askDelete('${d.id}')">🗑</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
         </tbody>
       </table>
       `}
@@ -1314,7 +1369,7 @@ function renderDashboard(root) {
 }
 
 /* ============================================================
-   Форма создания документа
+   Форма УК / КоАП
    ============================================================ */
 function renderForm(root, type) {
   const isUK = type === 'UK';
@@ -1386,11 +1441,8 @@ function renderForm(root, type) {
     const doc = {
       id: 'doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
       type, number: docNumber,
-      authorLogin: currentUser.login,
-      authorName: currentUser.name,
-      authorRank: currentUser.rank,
-      createdAt: new Date().toISOString(),
-      fields,
+      authorLogin: currentUser.login, authorName: currentUser.name, authorRank: currentUser.rank,
+      createdAt: new Date().toISOString(), fields,
     };
 
     try {
@@ -1399,11 +1451,7 @@ function renderForm(root, type) {
         authorLogin: doc.authorLogin, authorName: doc.authorName, authorRank: doc.authorRank,
         fields: doc.fields, createdAt: doc.createdAt,
       });
-    } catch (ex) {
-      console.error(ex);
-      toast('Ошибка сохранения документа', true);
-      return;
-    }
+    } catch (ex) { console.error(ex); toast('Ошибка сохранения документа', true); return; }
 
     allDocs.push(doc);
     toast('Документ сформирован');
@@ -1412,15 +1460,12 @@ function renderForm(root, type) {
 }
 
 /* ============================================================
-   Просмотр документа
+   Просмотр УК / КоАП
    ============================================================ */
 function renderDoc(root, docId) {
   const doc = __store.docs.find(d => d.id === docId);
   if (!doc) { root.innerHTML = '<div class="empty">Документ не найден</div>'; return; }
-  if (!canView(doc)) {
-    root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>';
-    return;
-  }
+  if (!canView(doc)) { root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>'; return; }
 
   const f = doc.fields;
   const isUK = doc.type === 'UK';
@@ -1432,29 +1477,18 @@ function renderDoc(root, docId) {
   root.innerHTML = `
     <div class="viewer-toolbar">
       <button class="btn secondary" onclick="nav('dashboard')">← К реестру</button>
-      <span style="color:var(--muted);font-size:12px">
-        Документ № ${esc(docNumber)} · создан ${fmtDate(doc.createdAt)}
-      </span>
+      <span style="color:var(--muted);font-size:12px">Документ № ${esc(docNumber)} · создан ${fmtDate(doc.createdAt)}</span>
       <span class="spacer"></span>
-      <button class="btn" onclick="downloadDocPhoto('${doc.id}')">📷 Скачать фото</button>
+      <button class="btn" onclick="downloadDocPhoto('docViewer','${esc(docNumber)}')">📷 Скачать фото</button>
       ${deletable ? `<button class="btn danger" onclick="askDelete('${doc.id}')">🗑 Удалить</button>` : ''}
     </div>
 
     <div class="doc" id="docViewer">
       <div class="stamp">ЭКЗЕМПЛЯР · ОРУ</div>
-
       <div class="doc-header">
         <div class="doc-header-left">
-          <div class="org-plain">
-            УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>
-            РОССИЙСКОЙ ФЕДЕРАЦИИ<br>
-            (УФСБ России)
-          </div>
-          <div class="org-bold">
-            ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>
-            УФСБ РОССИИ<br>
-            ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ
-          </div>
+          <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
+          <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
         </div>
         <div class="addressee">
           <span class="org">${esc(chief.position)}</span>
@@ -1462,18 +1496,11 @@ function renderDoc(root, docId) {
           <span class="rank">${esc(chief.rank)} ${esc(chief.name)}</span>
         </div>
       </div>
-
       <hr class="doc-header-line">
-
       <div class="doc-date-num">${dateFullRu()} / № ${esc(docNumber)} 283048</div>
       <div class="doc-city">г. Мариуполь</div>
-
       <h1>ПОСТАНОВЛЕНИЕ</h1>
-      <div class="sub">
-        ${isUK
-          ? 'о применении меры пресечения по уголовному делу (УК РФ)'
-          : 'по делу об административном правонарушении (КоАП РФ)'}
-      </div>
+      <div class="sub">${isUK ? 'о применении меры пресечения по уголовному делу (УК РФ)' : 'по делу об административном правонарушении (КоАП РФ)'}</div>
 
       <p>Я, <span class="fill">${esc(f.rank_investigator)}</span>
         <span class="fill">${esc(f.fio_investigator)}</span>,
@@ -1481,23 +1508,16 @@ function renderDoc(root, docId) {
         ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')},
         рассмотрев материалы ${isUK ? 'уголовного дела' : 'дела об административном правонарушении'},
       </p>
-
       <p><b>УСТАНОВИЛ:</b></p>
       <p>${esc(f.circumstances)}</p>
-
       <p>Военнослужащий <span class="fill">${esc(f.fio_detained)}</span>,
         ${f.rank_detained ? `звание: <span class="fill">${esc(f.rank_detained)}</span>,` : ''}
         должность: <span class="fill">${esc(f.position_detained)}</span>,
         подразделение: <span class="fill">${esc(f.unit_detained)}</span>,
         совершил деяние, предусмотренное <span class="fill">${esc(f.article)}</span>.
       </p>
-
-      <p>На основании изложенного и руководствуясь
-        ${isUK ? 'ст. 91, 92, 108 УПК РФ' : 'ст. 29.9, 29.10 КоАП РФ'},
-      </p>
-
+      <p>На основании изложенного и руководствуясь ${isUK ? 'ст. 91, 92, 108 УПК РФ' : 'ст. 29.9, 29.10 КоАП РФ'},</p>
       <p><b>ПОСТАНОВИЛ:</b></p>
-
       <p>Применить меру ${isUK ? 'пресечения' : 'дисциплинарного взыскания'} в виде:
         <span class="fill">${esc(f.measure)}</span>${f.term ? `, срок: <span class="fill">${esc(f.term)}</span>` : ''}.
         ${f.extra ? `<br>Дополнительно: ${esc(f.extra)}` : ''}
@@ -1513,62 +1533,307 @@ function renderDoc(root, docId) {
             <div class="sig-name">/ ${esc(f.fio_investigator)} /</div>
           </div>
         </div>
-        <div style="text-align:right">
-          «${todayStr()}»<br>
-          <span style="color:#666;font-size:11px"> </span>
-        </div>
+        <div style="text-align:right">«${todayStr()}»</div>
       </div>
     </div>
   `;
 }
 
 /* ============================================================
-   Скачивание фото
+   ФОРМА ОРМ
    ============================================================ */
-async function downloadDocPhoto(docId) {
-  const doc = __store.docs.find(d => d.id === docId);
-  if (!doc) { toast('Документ не найден', true); return; }
+function renderOrmForm(root) {
+  const hasSig = !!getSignature(currentUser.login);
 
-  const el = document.getElementById('docViewer');
+  root.innerHTML = `
+    <div class="panel" style="padding:22px">
+      <div class="panel-head" style="margin:-22px -22px 22px;border-bottom:1px solid var(--border)">
+        <h3>Распоряжение о проведении ОРМ</h3>
+        <span style="color:var(--muted);font-size:12px">Проект документа · ${todayStr()}</span>
+      </div>
+
+      ${!hasSig ? `
+        <div style="margin-bottom:18px;padding:10px 14px;background:#3a1a1a;border-left:3px solid var(--danger);border-radius:3px;font-size:12px">
+          Подпись не загружена — бланк будет без неё.
+          <a class="link" onclick="nav('profile')">Загрузить в профиле →</a>
+        </div>
+      ` : ''}
+
+      <form id="ormForm" class="form-grid" autocomplete="off">
+        <div class="section-title">Руководитель</div>
+        <div class="field"><label>ФИО</label><input name="fio_chief" required value="${esc(currentUser.name)}"></div>
+        <div class="field"><label>Звание</label><input name="rank_chief" required value="${esc(currentUser.rank)}"></div>
+        <div class="field"><label>Должность</label><input name="position_chief" required value="${esc(currentUser.position || '')}"></div>
+        <div class="field"><label>Подразделение</label><input name="unit_chief" required value="${esc(currentUser.subdivision || 'ОРУ УФСБ России по ДНР')}"></div>
+
+        <div class="section-title">Общие реквизиты</div>
+        <div class="field"><label>Место составления</label><input name="place" required placeholder="г. Мариуполь"></div>
+        <div class="field"><label>Повод (что рассмотрено)</label><input name="basis" required placeholder="сведения о ..."></div>
+
+        <div class="section-title">Вид ОРМ</div>
+        <div class="field full">
+          <label>Гласность мероприятия</label>
+          <div class="radio-row">
+            <label class="radio-item">
+              <input type="radio" name="glastnost" value="гласное" checked>
+              <span class="dot"></span>
+              <span>Гласное ОРМ</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="glastnost" value="внегласное">
+              <span class="dot"></span>
+              <span>Внегласное ОРМ</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Виды ОРМ (выберите одно или несколько — ст. 6 ФЗ-144)</label>
+          <div class="check-grid" id="ormCheckList">
+            ${ORM_LIST.map(o => `
+              <label class="check-item">
+                <input type="checkbox" name="orm_kinds" value="${esc(o.label)}">
+                <span class="box"></span>
+                <span>${esc(o.label)}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="section-title">Объект ОРМ</div>
+        <div class="field full">
+          <label>В отношении кого/чего проводится ОРМ</label>
+          <textarea name="target" rows="3" required placeholder="наименование юридического лица с указанием юридического адреса, и его фактического места расположения, Ф.И.О., место регистрации и фактического нахождения физического лица"></textarea>
+        </div>
+
+        <div class="section-title">Поручение</div>
+        <div class="field full">
+          <label>Кому поручить проведение</label>
+          <input name="assignee" required placeholder="должности, специальные звания, Ф.И.О.">
+        </div>
+
+        <div class="form-actions full">
+          <button type="button" class="btn secondary" onclick="nav('dashboard')">Отмена</button>
+          <button type="submit" class="btn">Сформировать распоряжение</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  /* Обработка кликов по радио-контейнерам — для подсветки выбранного */
+  root.querySelectorAll('.radio-item input, .check-item input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      root.querySelectorAll('.radio-item').forEach(el => {
+        el.classList.toggle('selected', el.querySelector('input').checked);
+      });
+      root.querySelectorAll('.check-item').forEach(el => {
+        el.classList.toggle('selected', el.querySelector('input').checked);
+      });
+    });
+  });
+  // первичная подсветка выбранного radio
+  root.querySelectorAll('.radio-item').forEach(el => {
+    el.classList.toggle('selected', el.querySelector('input').checked);
+  });
+
+  document.getElementById('ormForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const fields = Object.fromEntries(fd.entries());
+
+    const kinds = fd.getAll('orm_kinds');
+    if (kinds.length === 0) { toast('Выберите хотя бы один вид ОРМ', true); return; }
+
+    const glastnost = fields.glastnost;
+    const ormKindLabel = kinds.join('; ');
+    const targetLine = String(fields.target || '').split('\n')[0].slice(0, 80);
+
+    const all = __store.orm;
+    const docNumber = String(all.length + 1).padStart(3, '0');
+
+    const doc = {
+      id: 'orm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      type: 'ORM',
+      number: docNumber,
+      authorLogin: currentUser.login,
+      authorName: currentUser.name,
+      authorRank: currentUser.rank,
+      createdAt: new Date().toISOString(),
+      fields: {
+        ...fields,
+        ormKinds: kinds,
+        ormKindLabel,
+        targetLine,
+      },
+    };
+
+    try {
+      await fbPut(`orm/${doc.id}`, {
+        id: doc.id, type: doc.type, number: doc.number,
+        authorLogin: doc.authorLogin, authorName: doc.authorName, authorRank: doc.authorRank,
+        fields: doc.fields, createdAt: doc.createdAt,
+      });
+    } catch (ex) { console.error(ex); toast('Ошибка сохранения распоряжения', true); return; }
+
+    all.push(doc);
+    toast('Распоряжение сформировано');
+    nav('orm-' + doc.id);
+  });
+}
+
+/* ============================================================
+   ПРОСМОТР ОРМ
+   ============================================================ */
+function renderOrmDoc(root, docId) {
+  const doc = __store.orm.find(d => d.id === docId);
+  if (!doc) { root.innerHTML = '<div class="empty">Документ не найден</div>'; return; }
+  if (!canView(doc)) { root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>'; return; }
+
+  const f = doc.fields;
+  const sig = getSignature(doc.authorLogin);
+  const chief = getChiefData();
+  const docNumber = doc.number || '____';
+  const deletable = canDelete(doc);
+  const kinds = f.ormKinds || [];
+
+  root.innerHTML = `
+    <div class="viewer-toolbar">
+      <button class="btn secondary" onclick="nav('dashboard')">← К реестру</button>
+      <span style="color:var(--muted);font-size:12px">Распоряжение № ${esc(docNumber)} · создано ${fmtDate(doc.createdAt)}</span>
+      <span class="spacer"></span>
+      <button class="btn" onclick="downloadDocPhoto('ormViewer','${esc(docNumber)}')">📷 Скачать фото</button>
+      ${deletable ? `<button class="btn danger" onclick="askDelete('${doc.id}')">🗑 Удалить</button>` : ''}
+    </div>
+
+    <div class="doc" id="ormViewer" style="font-family:'Times New Roman',Georgia,serif">
+      <div class="stamp">ЭКЗЕМПЛЯР · ОРУ</div>
+
+      <div class="doc-header">
+        <div class="doc-header-left">
+          <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
+          <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
+        </div>
+        <div class="addressee">
+          <span class="org">${esc(chief.position)}</span>
+          <span class="org">${esc(chief.org)}</span>
+          <span class="rank">${esc(chief.rank)} ${esc(chief.name)}</span>
+        </div>
+      </div>
+
+      <hr class="doc-header-line">
+
+      <h1 style="text-align:center;font-size:17px;text-transform:uppercase;letter-spacing:2px;margin:20px 0 10px">
+        РАСПОРЯЖЕНИЕ № ${esc(docNumber)}
+      </h1>
+      <div class="sub" style="text-align:center;font-size:14px;margin-bottom:28px">
+        о проведении ${esc(f.glastnost || 'гласного')} оперативно-розыскного мероприятия —
+        обследование помещений, зданий, сооружений, участков местности и транспортных средств
+      </div>
+
+      <div class="orm-underline" style="font-size:12px;text-align:center;color:#444">(место составления)</div>
+      <div style="text-align:center;margin-top:-8px;margin-bottom:20px">${esc(f.place || 'г. Мариуполь')}</div>
+
+      <p style="text-align:left">
+        Я, <span class="orm-line">${esc(f.position_chief || '')}</span>
+        <span class="orm-line">${esc(f.rank_chief || '')}</span>
+        <span class="orm-line">${esc(f.fio_chief || '')}</span>,
+      </p>
+      <div class="orm-small">(должность, специальное звание, Ф.И.О. руководителя)</div>
+
+      <p style="text-align:left;margin-top:14px">
+        рассмотрев <span class="orm-line">${esc(f.basis || '')}</span>
+      </p>
+      <div class="orm-small">(сведения о документе, уголовном деле, материале проверки, ином основании)</div>
+
+      <div style="text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin:24px 0 14px">УСТАНОВИЛ:</div>
+
+      <p style="text-align:left">
+        В результате рассмотрения поступивших материалов установлена необходимость
+        проведения ${esc(f.glastnost || 'гласного')} оперативно-розыскного мероприятия
+        в виде: <b>${esc(f.ormKindLabel || '')}</b>.
+      </p>
+
+      <p style="text-align:left;margin-top:14px">
+        В отношении <span class="orm-line" style="min-width:420px">${esc(f.target || '')}</span>
+      </p>
+      <div class="orm-small">(наименование юридического лица с указанием юридического адреса, и его фактического места расположения, Ф.И.О., место регистрации и фактического нахождения физического лица)</div>
+
+      <p style="text-align:left;margin-top:20px">
+        Руководствуясь статьями 2, 6, 7 и 15 Федерального закона от 12 августа 1995 г.
+        № 144-ФЗ «Об оперативно-розыскной деятельности», —
+      </p>
+
+      <div style="text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin:24px 0 14px">ПРЕДЛАГАЮ:</div>
+
+      <div class="orm-list-item">
+        <div class="num">1.</div>
+        <div class="body">
+          С целью проверки сведений провести ${esc(f.glastnost || 'гласное')} оперативно-розыскное
+          мероприятие в виде: <b>${esc(f.ormKindLabel || '')}</b> в отношении объекта, указанного выше.
+        </div>
+      </div>
+      <div class="orm-list-item">
+        <div class="num">2.</div>
+        <div class="body">
+          Поручить проведение мероприятия
+          <span class="orm-line" style="min-width:400px">${esc(f.assignee || '')}</span>
+        </div>
+      </div>
+      <div class="orm-small" style="text-align:left;padding-left:28px">(должности, специальные звания, Ф.И.О. лиц, которым поручено проведение мероприятия)</div>
+
+      <div class="sig">
+        <div>
+          ${esc(f.position_chief || '')} ${esc(f.unit_chief || '')}
+          <div class="sig-block" style="margin-top:10px">
+            <div class="sig-slot ${sig ? '' : 'empty'}">
+              ${sig ? `<img src="${sig}" alt="подпись">` : ''}
+            </div>
+            <div class="sig-name">/ ${esc(f.fio_chief || '')} /</div>
+          </div>
+        </div>
+        <div style="text-align:right">«${todayStr()}»</div>
+      </div>
+
+      <div class="footnote">
+        <sup>1</sup> Не допускается разглашение сведений, составляющих государственную или иную охраняемую законом тайну.
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   Скачивание фото (универсальное)
+   ============================================================ */
+async function downloadDocPhoto(elId, num) {
+  const el = document.getElementById(elId);
   if (!el) { toast('Не удалось найти бланк', true); return; }
 
   toast('Готовим изображение…');
-
   try {
     const canvas = await html2canvas(el, {
       backgroundColor: '#f4f1e8',
-      scale: 2,
-      useCORS: true,
-      logging: false,
+      scale: 2, useCORS: true, logging: false,
     });
-
     canvas.toBlob((blob) => {
       if (!blob) { toast('Не удалось создать изображение', true); return; }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const num = doc.number || 'document';
       a.href = url;
-      a.download = `postanovlenie_${num}_283048.png`;
+      a.download = `document_${num || 'file'}_283048.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast('Фото скачано');
     }, 'image/png');
-  } catch (e) {
-    console.error(e);
-    toast('Ошибка создания изображения', true);
-  }
+  } catch (e) { console.error(e); toast('Ошибка создания изображения', true); }
 }
 
 /* ============================================================
-   Раздел «Пользователи»
+   Пользователи
    ============================================================ */
 function renderUsers(root) {
-  if (!canAccessUsersSection()) {
-    root.innerHTML = '<div class="empty">Доступ только для администратора и начальников ОРУ</div>';
-    return;
-  }
+  if (!canAccessUsersSection()) { root.innerHTML = '<div class="empty">Доступ только для администратора и начальников ОРУ</div>'; return; }
 
   const users = __store.users.slice().sort((a, b) => {
     const order = { admin: 0, chief: 1, employee: 2 };
@@ -1600,9 +1865,7 @@ function renderUsers(root) {
     <div class="panel">
       <div class="panel-head">
         <h3>Пользователи системы</h3>
-        <span style="color:var(--muted);font-size:12px">
-          Пароли хранятся в виде SHA-256-хешей
-        </span>
+        <span style="color:var(--muted);font-size:12px">Пароли хранятся в виде SHA-256-хешей</span>
       </div>
       <table>
         <thead>
@@ -1635,9 +1898,7 @@ function renderUsers(root) {
                       <option value="employee" ${u.role === 'employee' ? 'selected' : ''}>Сотрудник</option>
                       <option value="chief" ${u.role === 'chief' ? 'selected' : ''}>Начальник ОРУ</option>
                     </select>
-                  ` : `
-                    <span class="badge ${roleBadgeClass(u.role)}">${roleLabel(u.role)}</span>
-                  `}
+                  ` : `<span class="badge ${roleBadgeClass(u.role)}">${roleLabel(u.role)}</span>`}
                 </td>
                 <td><span class="badge ${statusBadgeClass(status)}">${statusLabel(status)}</span></td>
                 <td>
@@ -1652,7 +1913,7 @@ function renderUsers(root) {
                       : ''}
                     ${isSelf
                       ? `<span style="color:var(--muted);font-size:12px">— это вы —</span>`
-                      : (deletable || blockable ? '' : '')}
+                      : ''}
                     ${!isSelf && blockable
                       ? `<a class="link" style="color:var(--link);cursor:pointer" onclick="askToggleBlock('${esc(u.login)}')">
                            ${u.blocked ? 'Разблокировать' : 'Заблокировать'}
@@ -1682,14 +1943,9 @@ async function askToggleBlock(login) {
 
   const prev = user.blocked;
   user.blocked = !user.blocked;
-
   try {
     await fbPatch(`users/${user.login}`, { blocked: user.blocked });
-  } catch (e) {
-    user.blocked = prev;
-    toast('Ошибка сохранения', true);
-    return;
-  }
+  } catch (e) { user.blocked = prev; toast('Ошибка сохранения', true); return; }
   toast(user.blocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
   nav('users');
 }
@@ -1699,16 +1955,12 @@ async function askDeleteUser(login) {
   const user = users.find(u => u.login === login);
   if (!user) return;
   if (!canDeleteUser(user)) { toast('Недостаточно прав', true); return; }
-
   if (!confirm(`Удалить пользователя «${user.name}» (${login})?\nДействие необратимо.`)) return;
 
   try {
     await fbDelete(`users/${login}`);
     await fbDelete(`signatures/${login}`);
-  } catch (e) {
-    toast('Ошибка удаления', true);
-    return;
-  }
+  } catch (e) { toast('Ошибка удаления', true); return; }
 
   const idx = users.findIndex(u => u.login === login);
   if (idx !== -1) users.splice(idx, 1);
@@ -1722,16 +1974,8 @@ async function askChangeRole(login, newRole, selectEl) {
   const users = __store.users;
   const user = users.find(u => u.login === login);
   if (!user) return;
-
-  if (!canChangeRole(user)) {
-    toast('Недостаточно прав', true);
-    if (selectEl) selectEl.value = user.role;
-    return;
-  }
-  if (newRole !== 'employee' && newRole !== 'chief') {
-    if (selectEl) selectEl.value = user.role;
-    return;
-  }
+  if (!canChangeRole(user)) { toast('Недостаточно прав', true); if (selectEl) selectEl.value = user.role; return; }
+  if (newRole !== 'employee' && newRole !== 'chief') { if (selectEl) selectEl.value = user.role; return; }
   if (user.role === newRole) return;
 
   const toLabel = roleLabel(newRole);
@@ -1742,7 +1986,6 @@ async function askChangeRole(login, newRole, selectEl) {
 
   const oldRole = user.role;
   user.role = newRole;
-
   try {
     await fbPatch(`users/${user.login}`, { role: newRole });
   } catch (e) {
@@ -1767,9 +2010,8 @@ function renderProfile(root) {
     <div class="panel" style="padding:24px;max-width:900px">
       <div class="panel-head" style="margin:-24px -24px 22px;border-bottom:1px solid var(--border)">
         <h3>Мой профиль и подпись</h3>
-        ${!editing && !changingPwd ? `
-          <button class="btn" onclick="startProfileEdit()">✎ Редактировать профиль</button>
-        ` : `<span style="color:var(--muted);font-size:12px">${changingPwd ? 'Смена пароля' : 'Режим редактирования'}</span>`}
+        ${!editing && !changingPwd ? `<button class="btn" onclick="startProfileEdit()">✎ Редактировать профиль</button>`
+                                   : `<span style="color:var(--muted);font-size:12px">${changingPwd ? 'Смена пароля' : 'Режим редактирования'}</span>`}
       </div>
 
       <div class="profile-grid">
@@ -1835,7 +2077,6 @@ function renderProfile(root) {
       const newRank = String(fd.get('rank') || '').trim();
       const newPos  = String(fd.get('position') || '').trim();
       const newSub  = String(fd.get('subdivision') || '').trim();
-
       if (!newName || !newRank || !newPos || !newSub) { toast('Все поля обязательны', true); return; }
 
       const users = __store.users;
@@ -1843,21 +2084,15 @@ function renderProfile(root) {
       if (idx === -1) { toast('Пользователь не найден', true); return; }
 
       try {
-        await fbPatch(`users/${currentUser.login}`, {
-          name: newName, rank: newRank, position: newPos, subdivision: newSub
-        });
+        await fbPatch(`users/${currentUser.login}`, { name: newName, rank: newRank, position: newPos, subdivision: newSub });
       } catch (ex) { toast('Ошибка сохранения', true); return; }
 
-      users[idx].name = newName;
-      users[idx].rank = newRank;
-      users[idx].position = newPos;
-      users[idx].subdivision = newSub;
-
+      users[idx].name = newName; users[idx].rank = newRank;
+      users[idx].position = newPos; users[idx].subdivision = newSub;
       currentUser = users[idx];
       DB.set('oru_session', currentUser);
       document.getElementById('userName').textContent =
         (currentUser.rank ? currentUser.rank + ' ' : '') + currentUser.name;
-
       profileEditMode = false;
       toast('Данные профиля сохранены');
       renderProfile(root);
@@ -1873,7 +2108,6 @@ function renderProfile(root) {
       const cur  = String(fd.get('current') || '');
       const next = String(fd.get('next') || '');
       const next2 = String(fd.get('next2') || '');
-
       if (next !== next2) { err.textContent = 'Новые пароли не совпадают'; return; }
       if (next.length < 4) { err.textContent = 'Пароль слишком короткий'; return; }
 
@@ -1881,7 +2115,6 @@ function renderProfile(root) {
       if (hashCur !== currentUser.passwordHash) { err.textContent = 'Текущий пароль неверен'; return; }
 
       const hashNew = await sha256(next);
-
       const users = __store.users;
       const idx = users.findIndex(u => u.login === currentUser.login);
       if (idx === -1) { err.textContent = 'Пользователь не найден'; return; }
@@ -1893,7 +2126,6 @@ function renderProfile(root) {
       users[idx].passwordHash = hashNew;
       currentUser = users[idx];
       DB.set('oru_session', currentUser);
-
       err.textContent = '';
       profilePwdMode = false;
       toast('Пароль изменён');
@@ -1973,6 +2205,16 @@ function renderAbout(root) {
           <tr><td>Администратор</td><td>Полный доступ. Одобрение и отклонение заявок на верификацию.</td></tr>
         </tbody>
       </table>
+
+      <h4 style="margin:22px 0 6px;color:var(--accent-2);font-size:13px;letter-spacing:1px;text-transform:uppercase">Типы документов</h4>
+      <table>
+        <thead><tr><th>Тип</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td>УК РФ</td><td>Постановление об аресте по уголовному делу.</td></tr>
+          <tr><td>КоАП РФ</td><td>Постановление по делу об административном правонарушении.</td></tr>
+          <tr><td>ОРМ</td><td>Распоряжение о проведении гласного/внегласного оперативно-розыскного мероприятия (ст. 6 ФЗ-144).</td></tr>
+        </tbody>
+      </table>
     </div>
   `;
 }
@@ -1982,7 +2224,6 @@ function renderAbout(root) {
    ============================================================ */
 (async function init() {
   const overlay = document.getElementById('loadingOverlay');
-
   try {
     await loadAllFromFirebase();
     await ensureSeedAccounts();
@@ -1991,15 +2232,12 @@ function renderAbout(root) {
     overlay.innerHTML = `
       <div style="max-width:560px;padding:0 24px;text-align:center">
         <h2 style="color:#ff9a9a;margin:0 0 14px">Не удалось подключиться к базе данных</h2>
-        <p style="color:#8ba0b3;font-size:13px;line-height:1.6">
-          Проверьте: URL Firebase, правила чтения/записи, интернет-соединение.
-        </p>
+        <p style="color:#8ba0b3;font-size:13px;line-height:1.6">Проверьте: URL Firebase, правила чтения/записи, интернет-соединение.</p>
         <button class="btn" onclick="location.reload()" style="margin-top:16px">Повторить</button>
       </div>
     `;
     return;
   }
-
   overlay.classList.add('hide');
   setTimeout(() => overlay.remove(), 400);
 
