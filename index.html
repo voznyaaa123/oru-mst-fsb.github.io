@@ -111,7 +111,9 @@
   .doc .sub{text-align:center;font-size:13px;color:#444;margin-bottom:34px}
   .doc p{margin:0 0 10px;text-align:justify}
   .doc .fill{display:inline-block;border-bottom:1px solid #666;padding:0 4px;min-width:60px;font-weight:600}
+  .doc .fill-bold{display:inline-block;border-bottom:1px solid #333;padding:0 4px;min-width:60px;font-weight:700}
   .doc .hint-under{display:block;font-size:11px;color:#555;font-style:italic;text-align:center;margin:-6px 0 10px}
+  .doc .hint-left{display:block;font-size:11px;color:#555;font-style:italic;text-align:left;margin:-6px 0 10px}
   .doc .sig{margin-top:50px;display:flex;justify-content:space-between;font-size:13px}
   .doc .sig-block{display:flex;align-items:flex-end;gap:10px}
   .doc .sig-slot{width:180px;height:60px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #333;position:relative}
@@ -986,8 +988,8 @@ function renderDashboard(root) {
 function renderForm(root, type) {
   const isUK = type === 'UK';
   const measures = isUK
-    ? ['Выговор', 'Строгий выговор', 'Досрочное увольнение с военной службы в связи с невыполнением условий контракта', 'Заключение под стражу', 'Предупреждение о неполном служебном соответствии']
-    : ['Выговор', 'Строгий выговор', 'Досрочное увольнение с военной службы в связи с невыполнением условий контракта', 'Заключение под стражу', 'Административный штраф', 'Предупреждение о неполном служебном соответствии'];
+    ? ['Выговор', 'Строгий выговор', 'Увольнение', 'Заключение под стражу', 'Предупреждение о неполном служебном соответствии']
+    : ['Выговор', 'Строгий выговор', 'Увольнение', 'Заключение под стражу', 'Административный штраф', 'Предупреждение о неполном служебном соответствии'];
   const hasSig = !!getSignature(currentUser.login);
 
   root.innerHTML = `
@@ -1354,7 +1356,7 @@ function renderOrmDoc(root, docId) {
 }
 
 /* ============================================================
-   РЕЕСТР ДИСЦИПЛИНАРНЫХ ДОКУМЕНТОВ (только рапорты)
+   РЕЕСТР ДИСЦИПЛИНАРНЫХ ДОКУМЕНТОВ
    ============================================================ */
 function renderDiscRegistry(root) {
   const docs = visibleDisc().slice().sort((a, b) => {
@@ -1362,11 +1364,10 @@ function renderDiscRegistry(root) {
     const nb = parseInt(String(b.number || '0').replace(/\D/g, ''), 10) || 0;
     return nb - na;
   });
-  const rapCount = docs.length;
 
   root.innerHTML = `
     <div class="cards">
-      <div class="card"><div class="num">${rapCount}</div><div class="lbl">Рапортов</div></div>
+      <div class="card"><div class="num">${docs.length}</div><div class="lbl">Рапортов</div></div>
       <div class="card"><div class="num">Д-</div><div class="lbl">Префикс нумерации</div></div>
     </div>
     <div class="panel">
@@ -1426,11 +1427,10 @@ function renderRaportForm(root) {
         <div class="field"><label>Подразделение</label><input name="offender_unit" required placeholder="напр. ЦСН «А» ФСБ России"></div>
 
         <div class="section-title">Обстоятельства проступка</div>
-        <div class="field"><label>Дата и место совершения</label><input name="incident_date_place" required placeholder="напр. 10.10.2026, г. Мариуполь, ..."></div>
         <div class="field full"><label>Краткое изложение проступка</label><textarea name="incident_text" rows="4" required></textarea></div>
 
         <div class="section-title">Правовая квалификация и предложение</div>
-        <div class="field full"><label>Ссылка на норму</label><input name="law_ref" required placeholder="напр. ст. 28.5 ФЗ № 76-ФЗ, ст. 28 ДУ ВС РФ"></div>
+        <div class="field full"><label>Ссылка на норму</label><input name="law_ref" required placeholder="напр. ст. 28.5 ФЗ № 76-ФЗ, ст. 28 ДУ ВС РФ, ст. 20.1 КоАП РФ, ст. 336 УК РФ"></div>
         <div class="field">
           <label>Предлагаемое взыскание</label>
           <select name="punishment" required>
@@ -1471,7 +1471,7 @@ function renderRaportForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР: Рапорт
+   ПРОСМОТР: Рапорт — с новыми полями и подсказками
    ============================================================ */
 function renderRaportDoc(root, docId) {
   const doc = __store.disc.find(d => d.id === docId);
@@ -1510,37 +1510,45 @@ function renderRaportDoc(root, docId) {
       <h1>РАПОРТ</h1>
       <div class="sub">о выявленном дисциплинарном проступке</div>
 
+      <!-- Рапортующий: ФИО, должность, подразделение — подряд, без переноса -->
       <p>
         Я, <span class="fill">${esc(f.author_rank)}</span>
         <span class="fill">${esc(f.author_fio)}</span>,
+        <span class="fill">${esc(f.author_position || '')}</span>,
+        <span class="fill">${esc(f.author_unit || '')}</span>,
+        в порядке исполнения своих служебных обязанностей докладываю о нижеследующем.
       </p>
-      <span class="hint-under">(звание, фамилия, имя, отчество рапортующего)</span>
-      <p>
-        ${esc(f.author_position)} ${esc(f.author_unit || '')}, в порядке исполнения
-        своих служебных обязанностей докладываю о нижеследующем.
-      </p>
-      <span class="hint-under">(должность, подразделение)</span>
+      <span class="hint-under">(звание, фамилия, имя, отчество, должность, подразделение рапортующего)</span>
 
+      <!-- Нарушитель: звание, ФИО — обычным шрифтом и подчёркнуто, -->
+      <!-- ниже — должность жирным со строкой, потом подразделение жирным со строкой, -->
+      <!-- затем — то, что совершил, обычным текстом без графы снизу -->
       <p>
-        <b>${esc(f.incident_date_place)}</b> военнослужащий
-        <span class="fill">${esc(f.offender_rank)}</span>
+        Военнослужащий <span class="fill">${esc(f.offender_rank)}</span>
         <span class="fill">${esc(f.offender_fio)}</span>,
       </p>
       <span class="hint-under">(звание, фамилия, имя, отчество нарушителя)</span>
-      <p>
-        ${esc(f.offender_position)} ${esc(f.offender_unit || '')},
-        совершил дисциплинарный проступок, выразившийся в следующем:
-      </p>
-      <span class="hint-under">(должность, подразделение)</span>
 
-      <p>${esc(f.incident_text)}</p>
-      <span class="hint-under">(краткое изложение проступка)</span>
+      <p>
+        <span class="fill-bold">${esc(f.offender_position || '')}</span>,
+      </p>
+      <span class="hint-under">(должность нарушителя)</span>
+
+      <p>
+        <span class="fill-bold">${esc(f.offender_unit || '')}</span>,
+      </p>
+      <span class="hint-under">(подразделение нарушителя)</span>
+
+      <p>
+        совершил дисциплинарный проступок, выразившийся в следующем:
+        ${esc(f.incident_text)}.
+      </p>
 
       <p>
         Указанные действия (бездействие) содержат признаки нарушения
         <span class="fill">${esc(f.law_ref)}</span>.
       </p>
-      <span class="hint-under">(норма права)</span>
+      <span class="hint-under">(норма права: ДУ ВС РФ, ст. 28.5 ФЗ № 76-ФЗ, ст. 20.1 КоАП РФ, ст. 336 УК РФ и т.п.)</span>
 
       <p>
         На основании изложенного, руководствуясь Дисциплинарным уставом Вооружённых Сил
@@ -1553,6 +1561,7 @@ function renderRaportDoc(root, docId) {
       <span class="hint-under">(звание, фамилия, имя, отчество нарушителя, вид взыскания)</span>
 
       <p><b>Обоснование:</b> ${esc(f.reason)}</p>
+      <span class="hint-under">(обоснование предложения о взыскании)</span>
 
       <div class="sig">
         <div>
