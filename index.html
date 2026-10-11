@@ -1433,6 +1433,9 @@ function renderRaportForm(root) {
       </div>
       ${!hasSig ? `<div style="margin-bottom:18px;padding:10px 14px;background:#3a1a1a;border-left:3px solid var(--danger);border-radius:3px;font-size:12px">Подпись не загружена — бланк будет без неё. <a class="link" onclick="nav('profile')">Загрузить в профиле →</a></div>` : ''}
       <form id="rapForm" class="form-grid" autocomplete="off">
+        <div class="section-title">Кому адресован рапорт</div>
+        <div class="field full"><label>Адресат (командир/начальник)</label><input name="addressee" required placeholder="напр. Командиру в/ч 12345 полковнику Иванову И.И."></div>
+
         <div class="section-title">Рапортующий</div>
         <div class="field"><label>ФИО</label><input name="author_fio" required value="${esc(currentUser.name)}"></div>
         <div class="field"><label>Звание</label><input name="author_rank" required value="${esc(currentUser.rank)}"></div>
@@ -1498,9 +1501,11 @@ function renderRaportDoc(root, docId) {
   if (!canView(doc)) { root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>'; return; }
   const f = doc.fields;
   const sig = getSignature(doc.authorLogin);
-  const disc = getDiscData();
   const docNumber = doc.number || 'Д-___';
   const deletable = canDelete(doc);
+
+  // Если адресат не был указан (старые документы), используем дефолтный
+  const addressee = f.addressee || 'Командиру Центра специального назначения «А» ФСБ России полковнику Иванову И.И.';
 
   root.innerHTML = `
     <div class="viewer-toolbar">
@@ -1520,9 +1525,8 @@ function renderRaportDoc(root, docId) {
           <div class="org-city">г. Мариуполь</div>
         </div>
         <div class="addressee">
-          <span class="org">${esc(disc.position)}</span>
-          <span class="org">${esc(disc.org)}</span>
-          <span class="rank">${esc(disc.rank)} ${esc(disc.name)}</span>
+          <!-- Адресат выводится ОБЫЧНЫМ текстом, без форматирования -->
+          ${esc(addressee)}
         </div>
       </div>
 
@@ -1547,16 +1551,6 @@ function renderRaportDoc(root, docId) {
         <span class="fill-bold">${esc(f.offender_unit || '')}</span>,
       </p>
       <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество, должность, подразделение нарушителя)</span>
-      
-      <p style="text-align:left; margin-bottom:0;">
-        <span class="fill-bold">${esc(f.offender_position || '')}</span>,
-      </p>
-      <span class="hint-left" style="margin:0 0 10px 0;">(должность нарушителя)</span>
-
-      <p style="text-align:left; margin-bottom:0;">
-        <span class="fill-bold">${esc(f.offender_unit || '')}</span>,
-      </p>
-      <span class="hint-left" style="margin:0 0 10px 0;">(подразделение нарушителя)</span>
 
       <p style="text-align:left; margin-bottom:0;">
         совершил дисциплинарный проступок, выразившийся в следующем:
