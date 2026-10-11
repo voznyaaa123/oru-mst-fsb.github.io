@@ -577,6 +577,80 @@ function toast(msg,isErr){
 }
 function esc(s){return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
+/* ============================================================
+   Склонение званий и ФИО в дательный падеж
+   ============================================================ */
+function rankToDative(rank) {
+  if (!rank) return '';
+  const r = rank.trim();
+  const map = {
+    'рядовой':'рядовому','ефрейтор':'ефрейтору','сержант':'сержанту',
+    'старший сержант':'старшему сержанту','старшина':'старшине',
+    'прапорщик':'прапорщику','старший прапорщик':'старшему прапорщику',
+    'лейтенант':'лейтенанту','старший лейтенант':'старшему лейтенанту',
+    'капитан':'капитану','майор':'майору','подполковник':'подполковнику',
+    'полковник':'полковнику','генерал-майор':'генерал-майору',
+    'генерал-лейтенант':'генерал-лейтенанту','генерал-полковник':'генерал-полковнику',
+    'генерал армии':'генералу армии','маршал':'маршалу',
+    'младший лейтенант':'младшему лейтенанту',
+    'капитан 1 ранга':'капитану 1 ранга','капитан 2 ранга':'капитану 2 ранга',
+    'капитан 3 ранга':'капитану 3 ранга','капитан-лейтенант':'капитан-лейтенанту',
+    'старший мичман':'старшему мичману','мичман':'мичману',
+    'адмирал':'адмиралу','вице-адмирал':'вице-адмиралу','контр-адмирал':'контр-адмиралу',
+  };
+  const low = r.toLowerCase();
+  if (map[low]) {
+    const res = map[low];
+    return r[0] === r[0].toUpperCase() ? res[0].toUpperCase() + res.slice(1) : res;
+  }
+  return r;
+}
+
+function fioToDative(fio) {
+  if (!fio) return '';
+  const parts = fio.trim().split(/\s+/);
+  return parts.map(part => {
+    if (!part) return part;
+    // Женские отчества на -овна, -евна, -ична
+    if (/(овна|евна|ична|инична)$/i.test(part)) {
+      return part.slice(0, -1) + 'е';
+    }
+    // Фамилии на -ова, -ева, -ина (женские)
+    if (/(ова|ева|ина|ына)$/i.test(part)) {
+      return part.slice(0, -1) + 'ой';
+    }
+    // Фамилии на -ов, -ев, -ин, -ын (мужские)
+    if (/(ов|ев|ин|ын)$/i.test(part)) {
+      return part + 'у';
+    }
+    // Фамилии на -ский, -цкий, -ой
+    if (/(ский|цкий|ой)$/i.test(part)) {
+      return part.slice(0, -2) + 'ому';
+    }
+    // Отчества на -ович, -евич, -ич (мужские)
+    if (/(ович|евич|ич)$/i.test(part)) {
+      return part + 'у';
+    }
+    // Имена и фамилии на согласную
+    if (/[бвгджзйклмнпрстфхцчшщ]$/i.test(part)) {
+      return part + 'у';
+    }
+    // Имена на -ь
+    if (/ь$/i.test(part)) {
+      return part.slice(0, -1) + 'ю';
+    }
+    // Имена на -й
+    if (/й$/i.test(part)) {
+      return part.slice(0, -1) + 'ю';
+    }
+    // Имена и фамилии на -а, -я (кроме уже обработанных женских)
+    if (/[ая]$/i.test(part)) {
+      return part.slice(0, -1) + 'е';
+    }
+    return part;
+  }).join(' ');
+}
+
 function canAccessUsersSection(){return currentUser.role === 'admin' || currentUser.role === 'chief'}
 function canBlockUser(t){
   if(!currentUser || !t) return false;
@@ -1566,8 +1640,8 @@ function renderRaportDoc(root, docId) {
       <p style="text-align:left; margin-bottom:0;">
         На основании изложенного, руководствуясь Дисциплинарным уставом Вооружённых Сил
         Российской Федерации, <b>предлагаю</b> объявить военнослужащему
-        <span class="fill">${esc(f.offender_rank)}</span>
-        <span class="fill">${esc(f.offender_fio)}</span>
+        <span class="fill">${esc(rankToDative(f.offender_rank))}</span>
+        <span class="fill">${esc(fioToDative(f.offender_fio))}</span>
         дисциплинарное взыскание в виде:
         <span class="fill">${esc(f.punishment)}</span>.
       </p>
