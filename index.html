@@ -601,7 +601,8 @@ function canVerifyUser(t){
   if(t.isSystem) return false;
   return t.status === 'pending';
 }
-  /* ============================================================
+
+/* ============================================================
    Аутентификация
    ============================================================ */
 let currentUser = DB.get('oru_session', null);
@@ -1123,19 +1124,36 @@ function renderDoc(root, docId) {
 
       <h1>ПОСТАНОВЛЕНИЕ</h1>
       <div class="sub">${isUK ? 'о применении меры пресечения по уголовному делу (УК РФ)' : 'по делу об административном правонарушении (КоАП РФ)'}</div>
-      <p>Я, <span class="fill">${esc(f.rank_investigator)}</span> <span class="fill">${esc(f.fio_investigator)}</span>,</p>
-      <span class="hint-under">(звание, фамилия, имя, отчество)</span>
-      <p>${esc(f.position_investigator || '')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')}, рассмотрев материалы ${isUK ? 'уголовного дела' : 'дела об административном правонарушении'},</p>
-      <span class="hint-under">(должность, подразделение)</span>
-      <p><b>УСТАНОВИЛ:</b></p>
+      
+      <!-- ИСПРАВЛЕНО: Убраны лишние пробелы, подсказки строго под графами -->
+      <p style="text-align:left; margin-bottom:0;">Я, <span class="fill">${esc(f.rank_investigator)}</span> <span class="fill">${esc(f.fio_investigator)}</span>,</p>
+      <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество)</span>
+
+      <p style="text-align:left; margin-bottom:0;">${esc(f.position_investigator || '')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')},</p>
+      <span class="hint-left" style="margin:0 0 10px 0;">(должность, подразделение)</span>
+
+      <p style="text-align:left; margin-bottom:0;">рассмотрев материалы ${isUK ? 'уголовного дела' : 'дела об административном правонарушении'},</p>
+      <p style="text-align:left; margin-top:10px;"><b>УСТАНОВИЛ:</b></p>
       <p>${esc(f.circumstances)}</p>
-      <p>Военнослужащий <span class="fill">${esc(f.fio_detained)}</span>,</p>
-      <span class="hint-under">(фамилия, имя, отчество задержанного)</span>
-      <p>${f.rank_detained ? `звание: <span class="fill">${esc(f.rank_detained)}</span>,` : ''} должность: <span class="fill">${esc(f.position_detained)}</span>, подразделение: <span class="fill">${esc(f.unit_detained)}</span>, совершил деяние, предусмотренное <span class="fill">${esc(f.article)}</span>.</p>
-      <span class="hint-under">(звание, должность, подразделение, статья)</span>
+      
+      <!-- ИСПРАВЛЕНО: Блок задержанного, подсказки под графами -->
+      <p style="text-align:left; margin-bottom:0;">Военнослужащий <span class="fill">${esc(f.fio_detained)}</span>,</p>
+      <span class="hint-left" style="margin:0 0 10px 0;">(фамилия, имя, отчество задержанного)</span>
+
+      <p style="text-align:left; margin-bottom:0;">
+        ${f.rank_detained ? `звание: <span class="fill">${esc(f.rank_detained)}</span>,` : ''} 
+        должность: <span class="fill">${esc(f.position_detained)}</span>, 
+        подразделение: <span class="fill">${esc(f.unit_detained)}</span>,
+      </p>
+      <span class="hint-left" style="margin:0 0 10px 0;">(звание, должность, подразделение)</span>
+
+      <p style="text-align:left; margin-bottom:0;">совершил деяние, предусмотренное <span class="fill">${esc(f.article)}</span>.</p>
+      <span class="hint-left" style="margin:0 0 10px 0;">(статья)</span>
+
       <p>На основании изложенного и руководствуясь ${isUK ? 'ст. 91, 92, 108 УПК РФ' : 'ст. 29.9, 29.10 КоАП РФ'},</p>
       <p><b>ПОСТАНОВИЛ:</b></p>
       <p>${measureText}</p>
+      
       <div class="sig">
         <div>${esc(f.position_investigator || 'Сотрудник')} ${esc(f.unit_investigator || 'ОРУ УФСБ России по ДНР')}
           <div class="sig-block" style="margin-top:10px">
@@ -1289,17 +1307,18 @@ function renderOrmDoc(root, docId) {
       <div style="border-top:1px solid #333;margin:0 auto 4px;max-width:600px"></div>
       <div style="text-align:center;font-size:11px;color:#444;margin-bottom:22px">(место составления)</div>
 
-      <p style="text-align:left">
+      <!-- ИСПРАВЛЕНО: Убраны лишние пробелы -->
+      <p style="text-align:left; margin-bottom:0;">
         Я, <span class="orm-line">${esc(f.position_chief || '')}</span>
         <span class="orm-line">${esc(f.rank_chief || '')}</span>
         <span class="orm-line">${esc(f.fio_chief || '')}</span>,
       </p>
-      <div class="orm-small">(должность, специальное звание, Ф.И.О. руководителя)</div>
+      <div class="orm-small" style="text-align:left; margin:0 0 10px 0;">(должность, специальное звание, Ф.И.О. руководителя)</div>
 
-      <p style="text-align:left;margin-top:14px">
+      <p style="text-align:left; margin-bottom:0; margin-top:14px;">
         рассмотрев <span class="orm-line">${esc(f.basis || '')}</span>
       </p>
-      <div class="orm-small">(сведения о документе, материале проверки или ином основании)</div>
+      <div class="orm-small" style="text-align:left; margin:0 0 10px 0;">(сведения о документе, материале проверки или ином основании)</div>
 
       <div style="text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin:24px 0 14px">УСТАНОВИЛ:</div>
 
@@ -1309,10 +1328,10 @@ function renderOrmDoc(root, docId) {
         в виде: <b>${esc(f.ormKindLabel || '')}</b>.
       </p>
 
-      <p style="text-align:left;margin-top:14px">
+      <p style="text-align:left; margin-bottom:0; margin-top:14px;">
         В отношении <span class="orm-line" style="min-width:420px">${esc(f.target || '')}</span>
       </p>
-      <div class="orm-small">(наименование юридического лица, Ф.И.О. физического лица)</div>
+      <div class="orm-small" style="text-align:left; margin:0 0 10px 0;">(наименование юридического лица, Ф.И.О. физического лица)</div>
 
       <p style="text-align:left;margin-top:20px">
         Руководствуясь статьями 2, 6, 7 и 15 Федерального закона от 12 августа 1995 г.
@@ -1510,47 +1529,45 @@ function renderRaportDoc(root, docId) {
       <h1>РАПОРТ</h1>
       <div class="sub">о выявленном дисциплинарном проступке</div>
 
-      <!-- Рапортующий: ФИО, должность, подразделение — подряд, без переноса -->
-      <p>
+      <!-- Рапортующий: Убраны лишние пробелы, подсказка под графами -->
+      <p style="text-align:left; margin-bottom:0;">
         Я, <span class="fill">${esc(f.author_rank)}</span>
         <span class="fill">${esc(f.author_fio)}</span>,
         <span class="fill">${esc(f.author_position || '')}</span>,
         <span class="fill">${esc(f.author_unit || '')}</span>,
         в порядке исполнения своих служебных обязанностей докладываю о нижеследующем.
       </p>
-      <span class="hint-under">(звание, фамилия, имя, отчество, должность, подразделение рапортующего)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество, должность, подразделение рапортующего)</span>
 
-      <!-- Нарушитель: звание, ФИО — обычным шрифтом и подчёркнуто, -->
-      <!-- ниже — должность жирным со строкой, потом подразделение жирным со строкой, -->
-      <!-- затем — то, что совершил, обычным текстом без графы снизу -->
-      <p>
+      <!-- ИСПРАВЛЕНО (3-й скрин): Нарушитель. Должность и подразделение одной строкой без переноса. Подсказки строго под графами. -->
+      <p style="text-align:left; margin-bottom:0;">
         Военнослужащий <span class="fill">${esc(f.offender_rank)}</span>
         <span class="fill">${esc(f.offender_fio)}</span>,
       </p>
-      <span class="hint-under">(звание, фамилия, имя, отчество нарушителя)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество нарушителя)</span>
 
-      <p>
+      <p style="text-align:left; margin-bottom:0;">
         <span class="fill-bold">${esc(f.offender_position || '')}</span>,
       </p>
-      <span class="hint-under">(должность нарушителя)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(должность нарушителя)</span>
 
-      <p>
+      <p style="text-align:left; margin-bottom:0;">
         <span class="fill-bold">${esc(f.offender_unit || '')}</span>,
       </p>
-      <span class="hint-under">(подразделение нарушителя)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(подразделение нарушителя)</span>
 
-      <p>
+      <p style="text-align:left; margin-bottom:0;">
         совершил дисциплинарный проступок, выразившийся в следующем:
         ${esc(f.incident_text)}.
       </p>
 
-      <p>
+      <p style="text-align:left; margin-bottom:0;">
         Указанные действия (бездействие) содержат признаки нарушения
         <span class="fill">${esc(f.law_ref)}</span>.
       </p>
-      <span class="hint-under">(норма права: ДУ ВС РФ, ст. 28.5 ФЗ № 76-ФЗ, ст. 20.1 КоАП РФ, ст. 336 УК РФ и т.п.)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(норма права: ДУ ВС РФ, ст. 28.5 ФЗ № 76-ФЗ, ст. 20.1 КоАП РФ, ст. 336 УК РФ и т.п.)</span>
 
-      <p>
+      <p style="text-align:left; margin-bottom:0;">
         На основании изложенного, руководствуясь Дисциплинарным уставом Вооружённых Сил
         Российской Федерации, <b>предлагаю</b> объявить военнослужащему
         <span class="fill">${esc(f.offender_rank)}</span>
@@ -1558,10 +1575,10 @@ function renderRaportDoc(root, docId) {
         дисциплинарное взыскание в виде:
         <span class="fill">${esc(f.punishment)}</span>.
       </p>
-      <span class="hint-under">(звание, фамилия, имя, отчество нарушителя, вид взыскания)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество нарушителя, вид взыскания)</span>
 
-      <p><b>Обоснование:</b> ${esc(f.reason)}</p>
-      <span class="hint-under">(обоснование предложения о взыскании)</span>
+      <p style="text-align:left; margin-bottom:0;"><b>Обоснование:</b> ${esc(f.reason)}</p>
+      <span class="hint-left" style="margin:0 0 10px 0;">(обоснование предложения о взыскании)</span>
 
       <div class="sig">
         <div>
