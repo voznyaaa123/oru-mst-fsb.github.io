@@ -1539,18 +1539,14 @@ function renderRaportDoc(root, docId) {
       </p>
       <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество, должность, подразделение рапортующего)</span>
 
-      <!-- Нарушитель: звание и ФИО, затем должность и подразделение ОДНОЙ строкой -->
+      <!-- Нарушитель: звание, ФИО, должность и подразделение — ВСЁ В ОДНУ СТРОКУ без переносов -->
       <p style="text-align:left; margin-bottom:0;">
         Военнослужащий <span class="fill">${esc(f.offender_rank)}</span>
         <span class="fill">${esc(f.offender_fio)}</span>,
-      </p>
-      <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество нарушителя)</span>
-
-      <p style="text-align:left; margin-bottom:0;">
         <span class="fill-bold">${esc(f.offender_position || '')}</span>,
         <span class="fill-bold">${esc(f.offender_unit || '')}</span>,
       </p>
-      <span class="hint-left" style="margin:0 0 10px 0;">(должность, подразделение нарушителя)</span>
+      <span class="hint-left" style="margin:0 0 10px 0;">(звание, фамилия, имя, отчество, должность, подразделение нарушителя)</span>
       
       <p style="text-align:left; margin-bottom:0;">
         <span class="fill-bold">${esc(f.offender_position || '')}</span>,
