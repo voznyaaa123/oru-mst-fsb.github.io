@@ -79,7 +79,6 @@
   .badge.koap{background:#1a2c3a;color:#6db1e8}
   .badge.orm{background:#2a1a3a;color:#c78fe0}
   .badge.rap{background:#1a3a24;color:#7ee0a4}
-  .badge.prik{background:#3a241a;color:#e2a55e}
   .badge.blocked{background:#3a1a1a;color:#ff8080}
   .badge.active-user{background:#1a3a24;color:#7ee0a4}
   .badge.role-admin{background:#3a1a3a;color:#e28fe0}
@@ -267,7 +266,6 @@
       <div class="section">Дисциплинарная практика</div>
       <a data-page="disc">📋 Реестр дисциплинарных документов</a>
       <a data-page="new-rap">📝 Рапорт о проступке</a>
-      <a data-page="new-prik">📄 Выписка из приказа</a>
       <div class="section">Личный раздел</div>
       <a data-page="profile">🖋️ Мой профиль и подпись</a>
       <div class="section" id="navAdminSection" style="display:none">Администрирование</div>
@@ -863,14 +861,12 @@ function nav(page) {
   else if (page === 'new-orm')   renderOrmForm(c);
   else if (page === 'disc')      renderDiscRegistry(c);
   else if (page === 'new-rap')   renderRaportForm(c);
-  else if (page === 'new-prik')  renderPrikazForm(c);
   else if (page === 'profile')   renderProfile(c);
   else if (page === 'about')     renderAbout(c);
   else if (page === 'users')     renderUsers(c);
   else if (page.startsWith('view-'))   renderDoc(c, page.substring(5));
   else if (page.startsWith('orm-'))    renderOrmDoc(c, page.substring(4));
   else if (page.startsWith('rap-'))    renderRaportDoc(c, page.substring(4));
-  else if (page.startsWith('prik-'))   renderPrikazDoc(c, page.substring(5));
 }
 
 function visibleDocs() { return [...__store.docs, ...__store.orm]; }
@@ -895,8 +891,7 @@ function askDelete(id) {
   if (kind === 'orm') {
     meta = `Тип: <b>ОРМ · Распоряжение</b><br>Вид: <b>${esc(doc.fields.ormKindLabel || '—')}</b><br>В отношении: <b>${esc(doc.fields.targetLine || '—')}</b>`;
   } else if (kind === 'disc') {
-    const t = doc.type === 'RAP' ? 'Рапорт о проступке' : 'Выписка из приказа';
-    meta = `Тип: <b>${t}</b><br>Нарушитель: <b>${esc(doc.fields.offender_fio || '—')}</b><br>Взыскание: <b>${esc(doc.fields.punishment || '—')}</b>`;
+    meta = `Тип: <b>Рапорт о проступке</b><br>Нарушитель: <b>${esc(doc.fields.offender_fio || '—')}</b><br>Взыскание: <b>${esc(doc.fields.punishment || '—')}</b>`;
   } else {
     meta = `Тип: <b>${doc.type === 'UK' ? 'УК РФ' : 'КоАП РФ'}</b><br>Задержанный: <b>${esc(doc.fields.fio_detained)}</b><br>Статья: <b>${esc(doc.fields.article)}</b>`;
   }
@@ -913,7 +908,7 @@ function confirmDelete() {
   arr.splice(idx, 1);
   const node = kind === 'orm' ? 'orm' : kind === 'disc' ? 'disciplinary' : 'docs';
   fbDelete(`${node}/${id}`).catch(e => console.error(e));
-  const wasOnViewPage = ['view-','orm-','rap-','prik-'].some(pfx =>
+  const wasOnViewPage = ['view-','orm-','rap-'].some(pfx =>
     document.querySelector('nav.side a.active')?.dataset.page?.startsWith(pfx));
   closeDeleteModal(); toast('Документ удалён из реестра');
   if (wasOnViewPage) { if (kind === 'disc') nav('disc'); else nav('dashboard'); }
@@ -1082,7 +1077,7 @@ function renderForm(root, type) {
 }
 
 /* ============================================================
-   Просмотр УК / КоАП — без склонений, с подсказками
+   Просмотр УК / КоАП
    ============================================================ */
 function renderDoc(root, docId) {
   const doc = __store.docs.find(d => d.id === docId);
@@ -1242,7 +1237,7 @@ function renderOrmForm(root) {
 }
 
 /* ============================================================
-   Просмотр ОРМ — как вводил пользователь, без правок
+   Просмотр ОРМ
    ============================================================ */
 function renderOrmDoc(root, docId) {
   const doc = __store.orm.find(d => d.id === docId);
@@ -1359,7 +1354,7 @@ function renderOrmDoc(root, docId) {
 }
 
 /* ============================================================
-   РЕЕСТР ДИСЦИПЛИНАРНЫХ ДОКУМЕНТОВ
+   РЕЕСТР ДИСЦИПЛИНАРНЫХ ДОКУМЕНТОВ (только рапорты)
    ============================================================ */
 function renderDiscRegistry(root) {
   const docs = visibleDisc().slice().sort((a, b) => {
@@ -1367,43 +1362,38 @@ function renderDiscRegistry(root) {
     const nb = parseInt(String(b.number || '0').replace(/\D/g, ''), 10) || 0;
     return nb - na;
   });
-  const rapCount = docs.filter(d => d.type === 'RAP').length;
-  const prikCount = docs.filter(d => d.type === 'PRIK').length;
+  const rapCount = docs.length;
 
   root.innerHTML = `
     <div class="cards">
-      <div class="card"><div class="num">${docs.length}</div><div class="lbl">Всего документов</div></div>
       <div class="card"><div class="num">${rapCount}</div><div class="lbl">Рапортов</div></div>
-      <div class="card"><div class="num">${prikCount}</div><div class="lbl">Выписок из приказов</div></div>
       <div class="card"><div class="num">Д-</div><div class="lbl">Префикс нумерации</div></div>
     </div>
     <div class="panel">
       <div class="panel-head">
         <h3>Реестр дисциплинарных документов</h3>
         <div style="display:flex;gap:8px">
-          <button class="btn secondary" onclick="nav('new-rap')">+ Рапорт</button>
-          <button class="btn" onclick="nav('new-prik')">+ Выписка из приказа</button>
+          <button class="btn" onclick="nav('new-rap')">+ Рапорт о проступке</button>
         </div>
       </div>
       ${docs.length === 0 ? `<div class="empty">Документы отсутствуют</div>` : `
       <table>
         <thead><tr><th>№</th><th>Тип</th><th>Нарушитель</th><th>Взыскание</th><th>Составитель</th><th>Дата (МСК)</th><th>Действия</th></tr></thead>
         <tbody>
-          ${docs.map(d => {
-            const isRap = d.type === 'RAP';
-            return `<tr>
+          ${docs.map(d => `
+            <tr>
               <td>${esc(d.number || '—')}</td>
-              <td><span class="badge ${isRap ? 'rap' : 'prik'}">${isRap ? 'Рапорт' : 'Приказ'}</span></td>
+              <td><span class="badge rap">Рапорт</span></td>
               <td>${esc(d.fields.offender_fio || '—')}</td>
               <td>${esc(d.fields.punishment || '—')}</td>
               <td>${esc(d.authorRank)} ${esc(d.authorName)}</td>
               <td>${fmtDate(d.createdAt)}</td>
               <td><div class="row-actions">
-                <a class="link" onclick="nav('${isRap ? 'rap-' : 'prik-'}${d.id}')">Открыть →</a>
+                <a class="link" onclick="nav('rap-${d.id}')">Открыть →</a>
                 ${canDelete(d) ? `<button class="del-btn" title="Удалить" onclick="askDelete('${d.id}')">🗑</button>` : ''}
               </div></td>
-            </tr>`;
-          }).join('')}
+            </tr>
+          `).join('')}
         </tbody>
       </table>`}
     </div>
@@ -1481,10 +1471,10 @@ function renderRaportForm(root) {
 }
 
 /* ============================================================
-   ПРОСМОТР: Рапорт — как вводил пользователь
+   ПРОСМОТР: Рапорт
    ============================================================ */
 function renderRaportDoc(root, docId) {
-  const doc = __store.disc.find(d => d.id === docId && d.type === 'RAP');
+  const doc = __store.disc.find(d => d.id === docId);
   if (!doc) { root.innerHTML = '<div class="empty">Документ не найден</div>'; return; }
   if (!canView(doc)) { root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>'; return; }
   const f = doc.fields;
@@ -1573,167 +1563,6 @@ function renderRaportDoc(root, docId) {
           </div>
         </div>
         <div style="text-align:right">«${todayStr()}»</div>
-      </div>
-    </div>
-  `;
-}
-
-/* ============================================================
-   ФОРМА: Выписка из приказа
-   ============================================================ */
-function renderPrikazForm(root) {
-  const hasSig = !!getSignature(currentUser.login);
-  root.innerHTML = `
-    <div class="panel" style="padding:22px">
-      <div class="panel-head" style="margin:-22px -22px 22px;border-bottom:1px solid var(--border)">
-        <h3>Выписка из приказа о наложении дисциплинарного взыскания</h3>
-        <span style="color:var(--muted);font-size:12px">Проект документа · ${todayStr()}</span>
-      </div>
-      ${!hasSig ? `<div style="margin-bottom:18px;padding:10px 14px;background:#3a1a1a;border-left:3px solid var(--danger);border-radius:3px;font-size:12px">Подпись не загружена — бланк будет без неё. <a class="link" onclick="nav('profile')">Загрузить в профиле →</a></div>` : ''}
-      <form id="prikForm" class="form-grid" autocomplete="off">
-        <div class="section-title">Реквизиты приказа</div>
-        <div class="field"><label>Номер приказа</label><input name="prikaz_number" required placeholder="напр. № 245"></div>
-        <div class="field"><label>Дата приказа</label><input name="prikaz_date" required value="${todayStr()}"></div>
-        <div class="field full"><label>Издавший орган</label><input name="prikaz_issuer" required value="Командир Центра специального назначения «А» ФСБ России"></div>
-
-        <div class="section-title">Командир (подписант)</div>
-        <div class="field"><label>Звание</label><input name="commander_rank" required placeholder="напр. полковник"></div>
-        <div class="field"><label>ФИО</label><input name="commander_fio" required placeholder="Иванов И.И."></div>
-        <div class="field full"><label>Должность</label><input name="commander_position" required value="Командир ЦСН «А» ФСБ России"></div>
-
-        <div class="section-title">Военнослужащий, которому объявлено взыскание</div>
-        <div class="field"><label>ФИО</label><input name="offender_fio" required></div>
-        <div class="field"><label>Звание</label><input name="offender_rank" required></div>
-        <div class="field"><label>Должность</label><input name="offender_position" required></div>
-        <div class="field"><label>Подразделение</label><input name="offender_unit" required placeholder="напр. ЦСН «А» ФСБ России"></div>
-
-        <div class="section-title">Взыскание</div>
-        <div class="field">
-          <label>Вид взыскания</label>
-          <select name="punishment" required>
-            ${DISC_LIST.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="field full"><label>За что (краткое изложение)</label><textarea name="reason" rows="3" required></textarea></div>
-        <div class="field full"><label>Основание</label><input name="basis" required placeholder="напр. рапорт от 10.10.2026, материалы разбирательства"></div>
-
-        <div class="form-actions full">
-          <button type="button" class="btn secondary" onclick="nav('disc')">Отмена</button>
-          <button type="submit" class="btn">Сформировать выписку</button>
-        </div>
-      </form>
-    </div>
-  `;
-
-  document.getElementById('prikForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const fields = Object.fromEntries(fd.entries());
-    const docNumber = nextDiscNumber();
-    const doc = {
-      id: 'prik-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      type: 'PRIK', number: docNumber,
-      authorLogin: currentUser.login, authorName: currentUser.name, authorRank: currentUser.rank,
-      createdAt: new Date().toISOString(), fields,
-    };
-    try { await fbPut(`disciplinary/${doc.id}`, {
-      id:doc.id, type:doc.type, number:doc.number,
-      authorLogin:doc.authorLogin, authorName:doc.authorName, authorRank:doc.authorRank,
-      fields:doc.fields, createdAt:doc.createdAt
-    }); }
-    catch (ex) { console.error(ex); toast('Ошибка сохранения выписки', true); return; }
-    __store.disc.push(doc);
-    toast('Выписка сформирована · № ' + docNumber);
-    nav('prik-' + doc.id);
-  });
-}
-
-/* ============================================================
-   ПРОСМОТР: Выписка из приказа — как вводил пользователь
-   ============================================================ */
-function renderPrikazDoc(root, docId) {
-  const doc = __store.disc.find(d => d.id === docId && d.type === 'PRIK');
-  if (!doc) { root.innerHTML = '<div class="empty">Документ не найден</div>'; return; }
-  if (!canView(doc)) { root.innerHTML = '<div class="empty">Недостаточно прав для просмотра</div>'; return; }
-  const f = doc.fields;
-  const sig = getSignature(doc.authorLogin);
-  const chief = getChiefData();
-  const docNumber = doc.number || 'Д-___';
-  const deletable = canDelete(doc);
-
-  root.innerHTML = `
-    <div class="viewer-toolbar">
-      <button class="btn secondary" onclick="nav('disc')">← К реестру</button>
-      <span style="color:var(--muted);font-size:12px">Выписка № ${esc(docNumber)} · создана ${fmtDate(doc.createdAt)} (МСК)</span>
-      <span class="spacer"></span>
-      <button class="btn" onclick="downloadDocPhoto('prikViewer','${esc(docNumber)}')">📷 Скачать фото</button>
-      ${deletable ? `<button class="btn danger" onclick="askDelete('${doc.id}')">🗑 Удалить</button>` : ''}
-    </div>
-    <div class="doc" id="prikViewer">
-      <div class="stamp">ЭКЗЕМПЛЯР · ОСБ</div>
-      <div class="doc-header">
-        <div class="doc-header-left">
-          <div class="org-plain">УПРАВЛЕНИЕ ФЕДЕРАЛЬНОЙ СЛУЖБЫ БЕЗОПАСНОСТИ<br>РОССИЙСКОЙ ФЕДЕРАЦИИ<br>(УФСБ России)</div>
-          <div class="org-bold">ОПЕРАТИВНО-РОЗЫСКНОЕ УПРАВЛЕНИЕ<br>УФСБ РОССИИ<br>ПО ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКЕ</div>
-          <div class="org-date">${dateFullRu(doc.createdAt)} / № ${esc(docNumber)} 283048</div>
-          <div class="org-city">г. Мариуполь</div>
-        </div>
-        <div class="addressee">
-          <span class="org">${esc(chief.position)}</span>
-          <span class="org">${esc(chief.org)}</span>
-          <span class="rank">${esc(chief.rank)} ${esc(chief.name)}</span>
-        </div>
-      </div>
-
-      <h1>ВЫПИСКА ИЗ ПРИКАЗА</h1>
-      <div class="sub">о наложении дисциплинарного взыскания</div>
-
-      <p style="text-align:center;margin-bottom:20px">
-        <b>${esc(f.prikaz_issuer || '')}</b><br>
-        от «${esc(f.prikaz_date || '')}» ${esc(f.prikaz_number || '')}
-      </p>
-      <span class="hint-under">(издавший орган, дата и номер приказа)</span>
-
-      <p style="text-align:justify">
-        В соответствии с Дисциплинарным уставом Вооружённых Сил Российской Федерации,
-        за совершение дисциплинарного проступка —
-        ${esc(f.reason || '')},
-      </p>
-      <span class="hint-under">(краткое изложение проступка)</span>
-
-      <p style="text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin:24px 0 14px">ПРИКАЗЫВАЮ:</p>
-
-      <p style="text-align:justify">
-        Объявить военнослужащему
-        <span class="fill">${esc(f.offender_rank)}</span>
-        <span class="fill">${esc(f.offender_fio)}</span>,
-      </p>
-      <span class="hint-under">(звание и ФИО)</span>
-      <p style="text-align:justify">
-        ${esc(f.offender_position)} ${esc(f.offender_unit || '')},
-        дисциплинарное взыскание в виде:
-        <span class="fill">${esc(f.punishment)}</span>.
-      </p>
-      <span class="hint-under">(должность, подразделение, вид взыскания)</span>
-
-      <p style="text-align:justify">
-        <b>Основание:</b> ${esc(f.basis || '')}.
-      </p>
-      <span class="hint-under">(основание)</span>
-
-      <div class="sig">
-        <div>
-          ${esc(f.commander_position || '')}
-          <div class="sig-block" style="margin-top:10px">
-            <div class="sig-slot ${sig ? '' : 'empty'}">${sig ? `<img src="${sig}" alt="подпись">` : ''}</div>
-            <div class="sig-name">/ ${esc(f.commander_rank || '')} ${esc(f.commander_fio || '')} /</div>
-          </div>
-        </div>
-        <div style="text-align:right">«${todayStr()}»</div>
-      </div>
-
-      <div class="footnote">
-        Выписка верна. Начальник штаба ЦСН «А» ФСБ России.
       </div>
     </div>
   `;
@@ -2051,7 +1880,6 @@ function renderAbout(root) {
           <tr><td>КоАП РФ</td><td>Постановление по делу об административном правонарушении.</td></tr>
           <tr><td>ОРМ</td><td>Распоряжение о проведении гласного/внегласного ОРМ (ст. 6 ФЗ-144).</td></tr>
           <tr><td>Рапорт</td><td>Рапорт ОСБ о выявленном дисциплинарном проступке.</td></tr>
-          <tr><td>Выписка из приказа</td><td>Выписка из приказа командира о наложении дисциплинарного взыскания.</td></tr>
         </tbody>
       </table>
     </div>
